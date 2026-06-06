@@ -1,0 +1,21 @@
+using Prism.Events;
+using Prism.Events.Extensions;
+using Xunit;
+
+namespace Prism.Tests.Events
+{
+    public class EventAggregatorFixture
+    {
+        [Fact]
+        public void GetReturnsSingleInstancesOfSameEventType()
+        {
+            var eventAggregator = new EventAggregator();
+            var instance1 = eventAggregator.GetEvent<MockEventBase>();
+            var instance2 = eventAggregator.GetEvent<MockEventBase>();
+            var instance3 = eventAggregator.GetEvent<ReplayEvent<string>>();
+            Assert.Same(instance2, instance1);
+        }
+
+        public class MockEventBase : EventBase { }
+    }
+}

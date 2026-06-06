@@ -1,0 +1,28 @@
+<Project>
+  <Import Project="..\Directory.Build.targets" />
+
+  <Target Name="CopyNuGetReadme"
+          BeforeTargets="Build;CoreCompile"
+          Condition=" $(IsPackable) == 'true' ">
+    <Exec Command="echo # $(PackageId) > $(IntermediateOutputPath)\ReadMe.md"
+          ConsoleToMsBuild="true" />
+
+    <Exec Command="type $(MSBuildThisFileDirectory)ReadMe.md >> $(IntermediateOutputPath)\ReadMe.md"
+          ConsoleToMsBuild="true"
+          Condition="$([MSBuild]::IsOSPlatform('windows'))" />
+  </Target>
+
+  <Target Name="PackNuGetReadMe"
+          AfterTargets="CopyNuGetReadme"
+          Condition="$([MSBuild]::IsOSPlatform('windows'))">
+    <PropertyGroup>
+      <PackageReadmeFile>ReadMe.md</PackageReadmeFile>
+    </PropertyGroup>
+    <ItemGroup>
+      <None Include="$(IntermediateOutputPath)\ReadMe.md" PackagePath="\" Pack="true" />
+    </ItemGroup>
+  </Target>
+
+  <Import Project="$(MSBuildThisFileDirectory)winappsdk-workaround.targets"
+          Condition=" '$(IsUnoProject)' " />
+</Project>

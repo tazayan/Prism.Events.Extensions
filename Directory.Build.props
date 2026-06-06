@@ -1,0 +1,133 @@
+<Project>
+
+  <PropertyGroup>
+    <NeutralLanguage>en</NeutralLanguage>
+    <Authors>Brian Lagunas;Dan Siegel</Authors>
+    <PackageProjectUrl>https://github.com/PrismLibrary/Prism</PackageProjectUrl>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageIcon>prism-logo.png</PackageIcon>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/PrismLibrary/Prism</RepositoryUrl>
+    <IncludeSymbols>True</IncludeSymbols>
+    <IncludeSource>True</IncludeSource>
+    <PackageOutputPath>$(MSBuildThisFileDirectory)Artifacts</PackageOutputPath>
+    <EscapedCurrentDirectory>$([System.Text.RegularExpressions.Regex]::Escape('$(MSBuildThisFileDirectory)'))</EscapedCurrentDirectory>
+    <RelativeProjectPath>$([System.Text.RegularExpressions.Regex]::Replace('$(MSBuildProjectFullPath)', '$(EscapedCurrentDirectory)', ''))</RelativeProjectPath>
+    <PrismPackageIcon>$(MSBuildThisFileDirectory)images/prism-logo.png</PrismPackageIcon>
+    <PrismLicenseFile>$(MSBuildThisFileDirectory)LICENSE</PrismLicenseFile>
+    <LangVersion>latest</LangVersion>
+    <PolySharpIncludeGeneratedTypes>
+      System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembersAttribute;
+      System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes;
+      System.Diagnostics.CodeAnalysis.MaybeNullWhenAttribute;
+      System.Runtime.CompilerServices.IsExternalInit;
+    </PolySharpIncludeGeneratedTypes>
+    <WarningsAsErrors>$(WarningsAsErrors);IDE0003</WarningsAsErrors>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <NoWarn>$(NoWarn);NU5104;NU5100;NU5118;NU5123;NU1603;CS1701;CS1702;XA0101;MSB3277;CS8785;CS8669;CS1998;NU1507</NoWarn>
+    <IsCoreProject>false</IsCoreProject>
+    <IsCoreProject Condition=" $(MSBuildProjectName.Equals('Prism.Core')) OR $(MSBuildProjectName.Equals('Prism.Events'))">true</IsCoreProject>
+    <IsTestProject>$(MSBuildProjectName.Contains('Test'))</IsTestProject>
+    <IsWpfProject>$(MSBuildProjectName.Contains('Wpf'))</IsWpfProject>
+    <IsUnoProject>$(MSBuildProjectName.Contains('Uno'))</IsUnoProject>
+    <IsFormsProject>$(MSBuildProjectName.Contains('Forms'))</IsFormsProject>
+    <IsMauiProject>$(MSBuildProjectName.Contains('Maui'))</IsMauiProject>
+    <IsAvaloniaProject>$(MSBuildProjectName.Contains('Avalonia'))</IsAvaloniaProject>
+    <SignAssembly Condition=" ('$(IsCoreProject)' Or '$(IsWpfProject)') ">True</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)prism.snk</AssemblyOriginatorKeyFile>
+    <DelaySign>False</DelaySign>
+    <DisableCorePublish Condition=" '$(DisableCorePublish)' == '' ">false</DisableCorePublish>
+    <DisableWpfPublish Condition=" '$(DisableWpfPublish)' == '' ">false</DisableWpfPublish>
+    <DisableFormsPublish Condition=" '$(DisableFormsPublish)' == '' ">false</DisableFormsPublish>
+    <DisableUnoPublish Condition=" '$(DisableUnoPublish)' == '' ">false</DisableUnoPublish>
+    <IsPackable>false</IsPackable>
+    <PackageTags Condition=" '$(IsCoreProject)' == 'True' ">prism;wpf;xamarin;xaml</PackageTags>
+    <PackageTags Condition=" '$(IsWpfProject)' == 'True' ">prism;mvvm;wpf;dependency injection;di</PackageTags>
+    <PackageTags Condition=" '$(IsUnoProject)' == 'True' ">prism;mvvm;winui;uno-platform;xamarin;webassembly;android;ios;macos;dependency injection;di</PackageTags>
+    <PackageTags Condition=" '$(IsFormsProject)' == 'True' ">prism;mvvm;uwp;android;ios;xamarin;xamarin.forms;dependency injection;di</PackageTags>
+    <PackageTags Condition=" '$(IsAvaloniaProject)' == 'True' ">prism;mvvm;axaml;xaml;desktop;navigation;prismavalonia;dialog;linux;macos;avalonia;dependency injection;di</PackageTags>
+    <IS_PREVIEW Condition=" '$(IS_PREVIEW)' == '' ">false</IS_PREVIEW>
+    <IS_RELEASE Condition=" '$(IS_RELEASE)' == '' ">false</IS_RELEASE>
+    <UseWpf>$(IsWpfProject)</UseWpf>
+    <UseMaui>$(IsMauiProject)</UseMaui>
+    <MSBuildSdkExtrasVersion>3.0.44</MSBuildSdkExtrasVersion>
+  </PropertyGroup>
+
+
+  <!-- Versioning -->
+  <PropertyGroup>
+    <PackageReleaseNotes Condition="$(OfficialRelease) == 'true'">https://github.com/PrismLibrary/Prism/releases/tag/$(Version)</PackageReleaseNotes>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" $(TargetFramework.StartsWith('MonoAndroid')) ">
+    <DefineConstants>$(DefineConstants);__ANDROID__</DefineConstants>
+  </PropertyGroup>
+
+  <Choose>
+    <When Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
+      <PropertyGroup>
+        <SupportedOSPlatformVersion>21.0</SupportedOSPlatformVersion>
+      </PropertyGroup>
+    </When>
+    <When Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">
+      <PropertyGroup>
+        <SupportedOSPlatformVersion>14.2</SupportedOSPlatformVersion>
+      </PropertyGroup>
+    </When>
+    <When Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'macos'">
+      <PropertyGroup>
+        <SupportedOSPlatformVersion>10.14</SupportedOSPlatformVersion>
+      </PropertyGroup>
+    </When>
+    <When Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">
+      <PropertyGroup>
+        <SupportedOSPlatformVersion>14.0</SupportedOSPlatformVersion>
+      </PropertyGroup>
+    </When>
+    <When Condition="$(TargetFramework.Contains('windows10'))">
+      <PropertyGroup>
+        <UseRidGraph>true</UseRidGraph>
+        <SupportedOSPlatformVersion>10.0.18362.0</SupportedOSPlatformVersion>
+        <TargetPlatformMinVersion>10.0.18362.0</TargetPlatformMinVersion>
+      </PropertyGroup>
+    </When>
+  </Choose>
+
+  <ItemGroup>
+    <None Include="build\Package.props" Pack="true" PackagePath="buildTransitive\$(PackageId).props" Condition="exists('build\Package.props')"/>
+    <None Include="build\Package.targets" Pack="true" PackagePath="buildTransitive\$(PackageId).targets" Condition="exists('build\Package.targets')"/>
+  </ItemGroup>
+
+  <ItemGroup Condition=" $(IsTestProject) ">
+    <None Include="$(MSBuildThisFileDirectory)xunit.runner.json"
+          CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup Condition=" $(UseMaui) != 'true' ">
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup Condition=" $(DISABLE_GITVERSIONING) != 'true' ">
+    <PackageReference Include="Nerdbank.GitVersioning"
+                      Condition=" !$(MSBuildProjectDirectory.Contains('e2e')) ">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup Condition=" $(IsPackable) ">
+    <PackageReference Include="Microsoft.SourceLink.GitHub">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+</Project>

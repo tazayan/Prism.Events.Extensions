@@ -1,6 +1,4 @@
-using System;
-using System.Threading;
-using Prism.Events;
+using Prism.Events.Extensions;
 using Xunit;
 
 namespace Prism.Tests.Events
@@ -22,7 +20,7 @@ namespace Prism.Tests.Events
             IDelegateReference actionDelegateReference = new MockDelegateReference() { Target = action };
             IDelegateReference filterDelegateReference = new MockDelegateReference() { Target = (Predicate<object>)delegate { return true; } };
 
-            var eventSubscription = new BackgroundEventSubscription<object>(actionDelegateReference, filterDelegateReference);
+            var eventSubscription = new Prism.Events.Extensions.BackgroundEventSubscription<object>(actionDelegateReference, filterDelegateReference);
 
 
             var publishAction = eventSubscription.GetExecutionStrategy();
@@ -50,7 +48,7 @@ namespace Prism.Tests.Events
 
             IDelegateReference actionDelegateReference = new MockDelegateReference() { Target = action };
 
-            var eventSubscription = new BackgroundEventSubscription(actionDelegateReference);
+            var eventSubscription = new Prism.Events.Extensions.BackgroundEventSubscription(actionDelegateReference);
 
             var publishAction = eventSubscription.GetExecutionStrategy();
 

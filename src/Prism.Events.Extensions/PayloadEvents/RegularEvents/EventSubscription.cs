@@ -51,6 +51,23 @@ class EventSubscription<TPayload> : IEventSubscription
 
     Action<object[]> IEventSubscription.GetExecutionStrategy()
     {
+        Action<TPayload> action = Action;
+        Predicate<TPayload> filter = Filter;
+        if (action != null && filter != null)
+        {
+            return arguments =>
+            {
+                TPayload argument = default(TPayload);
+                if (arguments != null && arguments.Length > 0 && arguments[0] != null)
+                {
+                    argument = (TPayload)arguments[0];
+                }
+                if (filter(argument))
+                {
+                    InvokeAction(argument);
+                }
+            };
+        }
         return null;
     }
 

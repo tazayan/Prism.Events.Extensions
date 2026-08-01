@@ -1,9 +1,6 @@
-using System;
-using System.Collections.Generic;
-using Prism.Events;
 using Xunit;
 
-namespace Prism.Tests.Events
+namespace Prism.Events.Extensions.Tests
 {
     public class EventSubscriptionFixture
     {
@@ -207,11 +204,11 @@ namespace Prism.Tests.Events
             var eventSubscription = new EventSubscription<object>(actionDelegateReference, filterDelegateReference);
 
 
-            var publishAction = eventSubscription.GetExecutionStrategy();
+            var publishAction = eventSubscription.Action;
 
             Assert.NotNull(publishAction);
 
-            publishAction.Invoke(null);
+            eventSubscription.InvokeAction(null);
 
             Assert.Equal(2, executedDelegates.Count);
             Assert.Equal("Filter", executedDelegates[0]);
@@ -226,13 +223,13 @@ namespace Prism.Tests.Events
 
             var eventSubscription = new EventSubscription<object>(actionDelegateReference, filterDelegateReference);
 
-            var publishAction = eventSubscription.GetExecutionStrategy();
+            var publishAction = eventSubscription.Action;
 
             Assert.NotNull(publishAction);
 
             actionDelegateReference.Target = null;
 
-            publishAction = eventSubscription.GetExecutionStrategy();
+            publishAction = eventSubscription.Action;
 
             Assert.Null(publishAction);
         }
@@ -244,13 +241,13 @@ namespace Prism.Tests.Events
 
             var eventSubscription = new EventSubscription(actionDelegateReference);
 
-            var publishAction = eventSubscription.GetExecutionStrategy();
+            var publishAction = eventSubscription.Action;
 
             Assert.NotNull(publishAction);
 
             actionDelegateReference.Target = null;
 
-            publishAction = eventSubscription.GetExecutionStrategy();
+            publishAction = eventSubscription.Action;
 
             Assert.Null(publishAction);
         }
@@ -263,13 +260,13 @@ namespace Prism.Tests.Events
 
             var eventSubscription = new EventSubscription<object>(actionDelegateReference, filterDelegateReference);
 
-            var publishAction = eventSubscription.GetExecutionStrategy();
+            var publishAction = eventSubscription.Action;
 
             Assert.NotNull(publishAction);
 
             filterDelegateReference.Target = null;
 
-            publishAction = eventSubscription.GetExecutionStrategy();
+            publishAction = eventSubscription.Action;
 
             Assert.Null(publishAction);
         }
@@ -290,9 +287,9 @@ namespace Prism.Tests.Events
             var eventSubscription = new EventSubscription<int>(actionDelegateReference, filterDelegateReference);
 
 
-            var publishAction = eventSubscription.GetExecutionStrategy();
+            var publishAction = eventSubscription.Action;
 
-            publishAction.Invoke(new object[] { null });
+            eventSubscription.InvokeAction(0);
 
             Assert.False(actionExecuted);
         }
@@ -311,9 +308,8 @@ namespace Prism.Tests.Events
             }));
 
             var eventSubscription = new EventSubscription<string>(actionDelegateReference, filterDelegateReference);
-            var publishAction = eventSubscription.GetExecutionStrategy();
 
-            publishAction.Invoke(new[] { "TestString" });
+            eventSubscription.InvokeAction("TestString");
 
             Assert.Equal("TestString", passedArgumentToAction);
             Assert.Equal("TestString", passedArgumentToFilter);

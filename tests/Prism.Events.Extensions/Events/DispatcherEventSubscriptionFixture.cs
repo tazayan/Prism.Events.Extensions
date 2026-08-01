@@ -1,9 +1,6 @@
-using System;
-using System.Threading;
-using Prism.Events;
 using Xunit;
 
-namespace Prism.Tests.Events
+namespace Prism.Events.Extensions.Tests
 {
     public class DispatcherEventSubscriptionFixture
     {
@@ -28,7 +25,7 @@ namespace Prism.Tests.Events
 
             eventSubscription = new DispatcherEventSubscription<object>(actionDelegateReference, filterDelegateReference, mockSyncContext);
 
-            eventSubscription.GetExecutionStrategy().Invoke(new object[0]);
+            eventSubscription.InvokeAction(new object[0]);
 
             Assert.True(mockSyncContext.InvokeCalled);
         }
@@ -48,7 +45,7 @@ namespace Prism.Tests.Events
 
             eventSubscription = new DispatcherEventSubscription(actionDelegateReference, mockSyncContext);
 
-            eventSubscription.GetExecutionStrategy().Invoke(new object[0]);
+            eventSubscription.InvokeAction();
 
             Assert.True(mockSyncContext.InvokeCalled);
         }
@@ -73,12 +70,13 @@ namespace Prism.Tests.Events
 
             DispatcherEventSubscription<object> eventSubscription = new DispatcherEventSubscription<object>(actionDelegateReference, filterDelegateReference, mockSyncContext);
 
-            var executionStrategy = eventSubscription.GetExecutionStrategy();
+            var executionStrategy = eventSubscription.Action;
+
             Assert.NotNull(executionStrategy);
 
             object argument1 = new object();
 
-            executionStrategy.Invoke(new[] { argument1 });
+            eventSubscription.InvokeAction(argument1);
 
             Assert.Same(argument1, mockSyncContext.InvokeArg);
         }

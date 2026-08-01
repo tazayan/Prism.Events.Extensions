@@ -1,10 +1,4 @@
-
-
-
-using System;
-using Prism.Events;
-
-namespace Prism.Tests.Events;
+namespace Prism.Events.Extensions.Tests;
 
 class MockDelegateReference : IDelegateReference
 {

@@ -1,58 +1,52 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Prism.Events;
 using Xunit;
 
-namespace Prism.Tests.Events
+namespace Prism.Events.Extensions.Tests
 {
-    public class PubSubEventFixture
+    public class LightweightPubSubEventFixture
     {
         [Fact]
         public void EnsureSubscriptionListIsEmptyAfterPublishingAMessage()
         {
-            var pubSubEvent = new TestablePubSubEvent<string>();
-            SubscribeExternalActionWithoutReference(pubSubEvent);
+            var lightweightPubSubEvent = new TestableLightweightPubSubEvent<string>();
+            SubscribeExternalActionWithoutReference(lightweightPubSubEvent);
             GC.Collect();
-            pubSubEvent.Publish("testPayload");
-            Assert.True(pubSubEvent.BaseSubscriptions.Count == 0, "Subscriptionlist is not empty");
+            lightweightPubSubEvent.Publish("testPayload");
+            Assert.True(lightweightPubSubEvent.BaseSubscriptions.Count == 0, "Subscriptionlist is not empty");
         }
 
         [Fact]
         public void EnsureSubscriptionListIsNotEmptyWithoutPublishOrSubscribe()
         {
-            var pubSubEvent = new TestablePubSubEvent<string>();
-            SubscribeExternalActionWithoutReference(pubSubEvent);
+            var lightweightPubSubEvent = new TestableLightweightPubSubEvent<string>();
+            SubscribeExternalActionWithoutReference(lightweightPubSubEvent);
             GC.Collect();
-            Assert.True(pubSubEvent.BaseSubscriptions.Count == 1, "Subscriptionlist is empty");
+            Assert.True(lightweightPubSubEvent.BaseSubscriptions.Count == 1, "Subscriptionlist is empty");
         }
 
         [Fact]
         public void EnsureSubscriptionListIsEmptyAfterSubscribeAgainAMessage()
         {
-            var pubSubEvent = new TestablePubSubEvent<string>();
-            SubscribeExternalActionWithoutReference(pubSubEvent);
+            var lightweightPubSubEvent = new TestableLightweightPubSubEvent<string>();
+            SubscribeExternalActionWithoutReference(lightweightPubSubEvent);
             GC.Collect();
-            SubscribeExternalActionWithoutReference(pubSubEvent);
-            pubSubEvent.Prune();
-            Assert.True(pubSubEvent.BaseSubscriptions.Count == 1, "Subscriptionlist is empty");
+            SubscribeExternalActionWithoutReference(lightweightPubSubEvent);
+            lightweightPubSubEvent.Prune();
+            Assert.True(lightweightPubSubEvent.BaseSubscriptions.Count == 1, "Subscriptionlist is empty");
         }
 
-        private static void SubscribeExternalActionWithoutReference(TestablePubSubEvent<string> pubSubEvent)
+        private static void SubscribeExternalActionWithoutReference(TestableLightweightPubSubEvent<string> lightweightPubSubEvent)
         {
-            pubSubEvent.Subscribe(new ExternalAction().ExecuteAction);
+            lightweightPubSubEvent.Subscribe(new ExternalAction().ExecuteAction);
         }
 
 
         [Fact]
         public void CanSubscribeAndRaiseEvent()
         {
-            TestablePubSubEvent<string> pubSubEvent = new TestablePubSubEvent<string>();
+            TestableLightweightPubSubEvent<string> lightweightPubSubEvent = new TestableLightweightPubSubEvent<string>();
             bool published = false;
-            pubSubEvent.Subscribe(delegate { published = true; }, ThreadOption.PublisherThread, true, delegate { return true; });
-            pubSubEvent.Publish(null);
+            lightweightPubSubEvent.Subscribe(delegate { published = true; }, ThreadOption.PublisherThread, true, delegate { return true; });
+            lightweightPubSubEvent.Publish(null);
 
             Assert.True(published);
         }
@@ -60,10 +54,10 @@ namespace Prism.Tests.Events
         [Fact]
         public void CanSubscribeAndRaiseEventNonGeneric()
         {
-            var pubSubEvent = new TestablePubSubEvent();
+            var lightweightPubSubEvent = new TestableLightweightPubSubEvent();
             bool published = false;
-            pubSubEvent.Subscribe(delegate { published = true; }, ThreadOption.PublisherThread, true);
-            pubSubEvent.Publish();
+            lightweightPubSubEvent.Subscribe(delegate { published = true; }, ThreadOption.PublisherThread, true);
+            lightweightPubSubEvent.Publish();
 
             Assert.True(published);
         }
@@ -71,7 +65,7 @@ namespace Prism.Tests.Events
         [Fact]
         public void CanSubscribeAndRaiseCustomEvent()
         {
-            var customEvent = new TestablePubSubEvent<Payload>();
+            var customEvent = new TestableLightweightPubSubEvent<Payload>();
             Payload payload = new Payload();
             var action = new ActionHelper();
             customEvent.Subscribe(action.Action);
@@ -84,7 +78,7 @@ namespace Prism.Tests.Events
         [Fact]
         public void CanHaveMultipleSubscribersAndRaiseCustomEvent()
         {
-            var customEvent = new TestablePubSubEvent<Payload>();
+            var customEvent = new TestableLightweightPubSubEvent<Payload>();
             Payload payload = new Payload();
             var action1 = new ActionHelper();
             var action2 = new ActionHelper();
@@ -100,7 +94,7 @@ namespace Prism.Tests.Events
         [Fact]
         public void CanHaveMultipleSubscribersAndRaiseEvent()
         {
-            var customEvent = new TestablePubSubEvent();
+            var customEvent = new TestableLightweightPubSubEvent();
             var action1 = new ActionHelper();
             var action2 = new ActionHelper();
             customEvent.Subscribe(action1.Action);
@@ -115,11 +109,11 @@ namespace Prism.Tests.Events
         [Fact]
         public void SubscribeTakesExecuteDelegateThreadOptionAndFilter()
         {
-            TestablePubSubEvent<string> pubSubEvent = new TestablePubSubEvent<string>();
+            TestableLightweightPubSubEvent<string> lightweightPubSubEvent = new TestableLightweightPubSubEvent<string>();
             var action = new ActionHelper();
-            pubSubEvent.Subscribe(action.Action);
+            lightweightPubSubEvent.Subscribe(action.Action);
 
-            pubSubEvent.Publish("test");
+            lightweightPubSubEvent.Publish("test");
 
             Assert.Equal("test", action.ActionArg<string>());
 
@@ -128,15 +122,15 @@ namespace Prism.Tests.Events
         [Fact]
         public void FilterEnablesActionTarget()
         {
-            TestablePubSubEvent<string> pubSubEvent = new TestablePubSubEvent<string>();
+            TestableLightweightPubSubEvent<string> lightweightPubSubEvent = new TestableLightweightPubSubEvent<string>();
             var goodFilter = new MockFilter { FilterReturnValue = true };
             var actionGoodFilter = new ActionHelper();
             var badFilter = new MockFilter { FilterReturnValue = false };
             var actionBadFilter = new ActionHelper();
-            pubSubEvent.Subscribe(actionGoodFilter.Action, ThreadOption.PublisherThread, true, goodFilter.FilterString);
-            pubSubEvent.Subscribe(actionBadFilter.Action, ThreadOption.PublisherThread, true, badFilter.FilterString);
+            lightweightPubSubEvent.Subscribe(actionGoodFilter.Action, ThreadOption.PublisherThread, true, goodFilter.FilterString);
+            lightweightPubSubEvent.Subscribe(actionBadFilter.Action, ThreadOption.PublisherThread, true, badFilter.FilterString);
 
-            pubSubEvent.Publish("test");
+            lightweightPubSubEvent.Publish("test");
 
             Assert.True(actionGoodFilter.ActionCalled);
             Assert.False(actionBadFilter.ActionCalled);
@@ -146,15 +140,15 @@ namespace Prism.Tests.Events
         [Fact]
         public void FilterEnablesActionTarget_Weak()
         {
-            TestablePubSubEvent<string> pubSubEvent = new TestablePubSubEvent<string>();
+            TestableLightweightPubSubEvent<string> lightweightPubSubEvent = new TestableLightweightPubSubEvent<string>();
             var goodFilter = new MockFilter { FilterReturnValue = true };
             var actionGoodFilter = new ActionHelper();
             var badFilter = new MockFilter { FilterReturnValue = false };
             var actionBadFilter = new ActionHelper();
-            pubSubEvent.Subscribe(actionGoodFilter.Action, goodFilter.FilterString);
-            pubSubEvent.Subscribe(actionBadFilter.Action, badFilter.FilterString);
+            lightweightPubSubEvent.Subscribe(actionGoodFilter.Action, goodFilter.FilterString);
+            lightweightPubSubEvent.Subscribe(actionBadFilter.Action, badFilter.FilterString);
 
-            pubSubEvent.Publish("test");
+            lightweightPubSubEvent.Publish("test");
 
             Assert.True(actionGoodFilter.ActionCalled);
             Assert.False(actionBadFilter.ActionCalled);
@@ -164,7 +158,7 @@ namespace Prism.Tests.Events
         [Fact]
         public void SubscribeDefaultsThreadOptionAndNoFilter()
         {
-            TestablePubSubEvent<string> pubSubEvent = new TestablePubSubEvent<string>();
+            TestableLightweightPubSubEvent<string> lightweightPubSubEvent = new TestableLightweightPubSubEvent<string>();
             SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
             SynchronizationContext calledSyncContext = null;
             var myAction = new ActionHelper()
@@ -172,9 +166,9 @@ namespace Prism.Tests.Events
                 ActionToExecute =
                     () => calledSyncContext = SynchronizationContext.Current
             };
-            pubSubEvent.Subscribe(myAction.Action);
+            lightweightPubSubEvent.Subscribe(myAction.Action);
 
-            pubSubEvent.Publish("test");
+            lightweightPubSubEvent.Publish("test");
 
             Assert.Equal(SynchronizationContext.Current, calledSyncContext);
         }
@@ -182,7 +176,7 @@ namespace Prism.Tests.Events
         [Fact]
         public void SubscribeDefaultsThreadOptionAndNoFilterNonGeneric()
         {
-            var pubSubEvent = new TestablePubSubEvent();
+            var lightweightPubSubEvent = new TestableLightweightPubSubEvent();
             SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
             SynchronizationContext calledSyncContext = null;
             var myAction = new ActionHelper()
@@ -190,9 +184,9 @@ namespace Prism.Tests.Events
                 ActionToExecute =
                     () => calledSyncContext = SynchronizationContext.Current
             };
-            pubSubEvent.Subscribe(myAction.Action);
+            lightweightPubSubEvent.Subscribe(myAction.Action);
 
-            pubSubEvent.Publish();
+            lightweightPubSubEvent.Publish();
 
             Assert.Equal(SynchronizationContext.Current, calledSyncContext);
         }
@@ -200,7 +194,7 @@ namespace Prism.Tests.Events
         [Fact]
         public void ShouldUnsubscribeFromPublisherThread()
         {
-            var PubSubEvent = new TestablePubSubEvent<string>();
+            var PubSubEvent = new TestableLightweightPubSubEvent<string>();
 
             var actionEvent = new ActionHelper();
             PubSubEvent.Subscribe(
@@ -215,40 +209,40 @@ namespace Prism.Tests.Events
         [Fact]
         public void ShouldUnsubscribeFromPublisherThreadNonGeneric()
         {
-            var pubSubEvent = new TestablePubSubEvent();
+            var lightweightPubSubEvent = new TestableLightweightPubSubEvent();
 
             var actionEvent = new ActionHelper();
-            pubSubEvent.Subscribe(
+            lightweightPubSubEvent.Subscribe(
                 actionEvent.Action,
                 ThreadOption.PublisherThread);
 
-            Assert.True(pubSubEvent.Contains(actionEvent.Action));
-            pubSubEvent.Unsubscribe(actionEvent.Action);
-            Assert.False(pubSubEvent.Contains(actionEvent.Action));
+            Assert.True(lightweightPubSubEvent.Contains(actionEvent.Action));
+            lightweightPubSubEvent.Unsubscribe(actionEvent.Action);
+            Assert.False(lightweightPubSubEvent.Contains(actionEvent.Action));
         }
 
         [Fact]
         public void UnsubscribeShouldNotFailWithNonSubscriber()
         {
-            TestablePubSubEvent<string> pubSubEvent = new TestablePubSubEvent<string>();
+            TestableLightweightPubSubEvent<string> lightweightPubSubEvent = new TestableLightweightPubSubEvent<string>();
 
             Action<string> subscriber = delegate { };
-            pubSubEvent.Unsubscribe(subscriber);
+            lightweightPubSubEvent.Unsubscribe(subscriber);
         }
 
         [Fact]
         public void UnsubscribeShouldNotFailWithNonSubscriberNonGeneric()
         {
-            var pubSubEvent = new TestablePubSubEvent();
+            var lightweightPubSubEvent = new TestableLightweightPubSubEvent();
 
             Action subscriber = delegate { };
-            pubSubEvent.Unsubscribe(subscriber);
+            lightweightPubSubEvent.Unsubscribe(subscriber);
         }
 
         [Fact]
         public void ShouldUnsubscribeFromBackgroundThread()
         {
-            var PubSubEvent = new TestablePubSubEvent<string>();
+            var PubSubEvent = new TestableLightweightPubSubEvent<string>();
 
             var actionEvent = new ActionHelper();
             PubSubEvent.Subscribe(
@@ -263,22 +257,22 @@ namespace Prism.Tests.Events
         [Fact]
         public void ShouldUnsubscribeFromBackgroundThreadNonGeneric()
         {
-            var pubSubEvent = new TestablePubSubEvent();
+            var lightweightPubSubEvent = new TestableLightweightPubSubEvent();
 
             var actionEvent = new ActionHelper();
-            pubSubEvent.Subscribe(
+            lightweightPubSubEvent.Subscribe(
                 actionEvent.Action,
                 ThreadOption.BackgroundThread);
 
-            Assert.True(pubSubEvent.Contains(actionEvent.Action));
-            pubSubEvent.Unsubscribe(actionEvent.Action);
-            Assert.False(pubSubEvent.Contains(actionEvent.Action));
+            Assert.True(lightweightPubSubEvent.Contains(actionEvent.Action));
+            lightweightPubSubEvent.Unsubscribe(actionEvent.Action);
+            Assert.False(lightweightPubSubEvent.Contains(actionEvent.Action));
         }
 
         [Fact]
         public void ShouldUnsubscribeFromUIThread()
         {
-            var PubSubEvent = new TestablePubSubEvent<string>();
+            var PubSubEvent = new TestableLightweightPubSubEvent<string>();
             PubSubEvent.SynchronizationContext = new SynchronizationContext();
 
             var actionEvent = new ActionHelper();
@@ -294,23 +288,23 @@ namespace Prism.Tests.Events
         [Fact]
         public void ShouldUnsubscribeFromUIThreadNonGeneric()
         {
-            var pubSubEvent = new TestablePubSubEvent();
-            pubSubEvent.SynchronizationContext = new SynchronizationContext();
+            var lightweightPubSubEvent = new TestableLightweightPubSubEvent();
+            lightweightPubSubEvent.SynchronizationContext = new SynchronizationContext();
 
             var actionEvent = new ActionHelper();
-            pubSubEvent.Subscribe(
+            lightweightPubSubEvent.Subscribe(
                 actionEvent.Action,
                 ThreadOption.UIThread);
 
-            Assert.True(pubSubEvent.Contains(actionEvent.Action));
-            pubSubEvent.Unsubscribe(actionEvent.Action);
-            Assert.False(pubSubEvent.Contains(actionEvent.Action));
+            Assert.True(lightweightPubSubEvent.Contains(actionEvent.Action));
+            lightweightPubSubEvent.Unsubscribe(actionEvent.Action);
+            Assert.False(lightweightPubSubEvent.Contains(actionEvent.Action));
         }
 
         [Fact]
         public void ShouldUnsubscribeASingleDelegate()
         {
-            var PubSubEvent = new TestablePubSubEvent<string>();
+            var PubSubEvent = new TestableLightweightPubSubEvent<string>();
 
             int callCount = 0;
 
@@ -330,27 +324,27 @@ namespace Prism.Tests.Events
         [Fact]
         public void ShouldUnsubscribeASingleDelegateNonGeneric()
         {
-            var pubSubEvent = new TestablePubSubEvent();
+            var lightweightPubSubEvent = new TestableLightweightPubSubEvent();
 
             int callCount = 0;
 
             var actionEvent = new ActionHelper() { ActionToExecute = () => callCount++ };
-            pubSubEvent.Subscribe(actionEvent.Action);
-            pubSubEvent.Subscribe(actionEvent.Action);
+            lightweightPubSubEvent.Subscribe(actionEvent.Action);
+            lightweightPubSubEvent.Subscribe(actionEvent.Action);
 
-            pubSubEvent.Publish();
+            lightweightPubSubEvent.Publish();
             Assert.Equal<int>(2, callCount);
 
             callCount = 0;
-            pubSubEvent.Unsubscribe(actionEvent.Action);
-            pubSubEvent.Publish();
+            lightweightPubSubEvent.Unsubscribe(actionEvent.Action);
+            lightweightPubSubEvent.Publish();
             Assert.Equal<int>(1, callCount);
         }
 
         [Fact]
         public async Task ShouldNotExecuteOnGarbageCollectedDelegateReferenceWhenNotKeepAlive()
         {
-            var PubSubEvent = new TestablePubSubEvent<string>();
+            var PubSubEvent = new TestableLightweightPubSubEvent<string>();
 
             ExternalAction externalAction = new ExternalAction();
             PubSubEvent.Subscribe(externalAction.ExecuteAction);
@@ -370,12 +364,12 @@ namespace Prism.Tests.Events
         [Fact]
         public async Task ShouldNotExecuteOnGarbageCollectedDelegateReferenceWhenNotKeepAliveNonGeneric()
         {
-            var pubSubEvent = new TestablePubSubEvent();
+            var lightweightPubSubEvent = new TestableLightweightPubSubEvent();
 
             var externalAction = new ExternalAction();
-            pubSubEvent.Subscribe(externalAction.ExecuteAction);
+            lightweightPubSubEvent.Subscribe(externalAction.ExecuteAction);
 
-            pubSubEvent.Publish();
+            lightweightPubSubEvent.Publish();
             Assert.True(externalAction.Executed);
 
             var actionEventReference = new WeakReference(externalAction);
@@ -384,13 +378,13 @@ namespace Prism.Tests.Events
             GC.Collect();
             Assert.False(actionEventReference.IsAlive);
 
-            pubSubEvent.Publish();
+            lightweightPubSubEvent.Publish();
         }
 
         [Fact]
         public async Task ShouldNotExecuteOnGarbageCollectedFilterReferenceWhenNotKeepAlive()
         {
-            var PubSubEvent = new TestablePubSubEvent<string>();
+            var PubSubEvent = new TestableLightweightPubSubEvent<string>();
 
             bool wasCalled = false;
             var actionEvent = new ActionHelper() { ActionToExecute = () => wasCalled = true };
@@ -415,7 +409,7 @@ namespace Prism.Tests.Events
         [Fact]
         public void CanAddSubscriptionWhileEventIsFiring()
         {
-            var PubSubEvent = new TestablePubSubEvent<string>();
+            var PubSubEvent = new TestableLightweightPubSubEvent<string>();
 
             var emptyAction = new ActionHelper();
             var subscriptionAction = new ActionHelper
@@ -437,29 +431,29 @@ namespace Prism.Tests.Events
         [Fact]
         public void CanAddSubscriptionWhileEventIsFiringNonGeneric()
         {
-            var pubSubEvent = new TestablePubSubEvent();
+            var lightweightPubSubEvent = new TestableLightweightPubSubEvent();
 
             var emptyAction = new ActionHelper();
             var subscriptionAction = new ActionHelper
             {
                 ActionToExecute = (() =>
-                                          pubSubEvent.Subscribe(
+                                          lightweightPubSubEvent.Subscribe(
                                           emptyAction.Action))
             };
 
-            pubSubEvent.Subscribe(subscriptionAction.Action);
+            lightweightPubSubEvent.Subscribe(subscriptionAction.Action);
 
-            Assert.False(pubSubEvent.Contains(emptyAction.Action));
+            Assert.False(lightweightPubSubEvent.Contains(emptyAction.Action));
 
-            pubSubEvent.Publish();
+            lightweightPubSubEvent.Publish();
 
-            Assert.True((pubSubEvent.Contains(emptyAction.Action)));
+            Assert.True((lightweightPubSubEvent.Contains(emptyAction.Action)));
         }
 
         [Fact]
         public void InlineDelegateDeclarationsDoesNotGetCollectedIncorrectlyWithWeakReferences()
         {
-            var PubSubEvent = new TestablePubSubEvent<string>();
+            var PubSubEvent = new TestableLightweightPubSubEvent<string>();
             bool published = false;
             PubSubEvent.Subscribe(delegate { published = true; }, ThreadOption.PublisherThread, false, delegate { return true; });
             GC.Collect();
@@ -471,11 +465,11 @@ namespace Prism.Tests.Events
         [Fact]
         public void InlineDelegateDeclarationsDoesNotGetCollectedIncorrectlyWithWeakReferencesNonGeneric()
         {
-            var pubSubEvent = new TestablePubSubEvent();
+            var lightweightPubSubEvent = new TestableLightweightPubSubEvent();
             bool published = false;
-            pubSubEvent.Subscribe(delegate { published = true; }, ThreadOption.PublisherThread, false);
+            lightweightPubSubEvent.Subscribe(delegate { published = true; }, ThreadOption.PublisherThread, false);
             GC.Collect();
-            pubSubEvent.Publish();
+            lightweightPubSubEvent.Publish();
 
             Assert.True(published);
         }
@@ -483,7 +477,7 @@ namespace Prism.Tests.Events
         [Fact]
         public void ShouldNotGarbageCollectDelegateReferenceWhenUsingKeepAlive()
         {
-            var PubSubEvent = new TestablePubSubEvent<string>();
+            var PubSubEvent = new TestableLightweightPubSubEvent<string>();
 
             var externalAction = new ExternalAction();
             PubSubEvent.Subscribe(externalAction.ExecuteAction, ThreadOption.PublisherThread, true);
@@ -502,10 +496,10 @@ namespace Prism.Tests.Events
         [Fact]
         public void ShouldNotGarbageCollectDelegateReferenceWhenUsingKeepAliveNonGeneric()
         {
-            var pubSubEvent = new TestablePubSubEvent();
+            var lightweightPubSubEvent = new TestableLightweightPubSubEvent();
 
             var externalAction = new ExternalAction();
-            pubSubEvent.Subscribe(externalAction.ExecuteAction, ThreadOption.PublisherThread, true);
+            lightweightPubSubEvent.Subscribe(externalAction.ExecuteAction, ThreadOption.PublisherThread, true);
 
             WeakReference actionEventReference = new WeakReference(externalAction);
             externalAction = null;
@@ -513,7 +507,7 @@ namespace Prism.Tests.Events
             GC.Collect();
             Assert.True(actionEventReference.IsAlive);
 
-            pubSubEvent.Publish();
+            lightweightPubSubEvent.Publish();
 
             Assert.True(((ExternalAction)actionEventReference.Target).Executed);
         }
@@ -521,7 +515,7 @@ namespace Prism.Tests.Events
         [Fact]
         public void RegisterReturnsTokenThatCanBeUsedToUnsubscribe()
         {
-            var PubSubEvent = new TestablePubSubEvent<string>();
+            var PubSubEvent = new TestableLightweightPubSubEvent<string>();
             var emptyAction = new ActionHelper();
 
             var token = PubSubEvent.Subscribe(emptyAction.Action);
@@ -533,19 +527,19 @@ namespace Prism.Tests.Events
         [Fact]
         public void RegisterReturnsTokenThatCanBeUsedToUnsubscribeNonGeneric()
         {
-            var pubSubEvent = new TestablePubSubEvent();
+            var lightweightPubSubEvent = new TestableLightweightPubSubEvent();
             var emptyAction = new ActionHelper();
 
-            var token = pubSubEvent.Subscribe(emptyAction.Action);
-            pubSubEvent.Unsubscribe(token);
+            var token = lightweightPubSubEvent.Subscribe(emptyAction.Action);
+            lightweightPubSubEvent.Unsubscribe(token);
 
-            Assert.False(pubSubEvent.Contains(emptyAction.Action));
+            Assert.False(lightweightPubSubEvent.Contains(emptyAction.Action));
         }
 
         [Fact]
         public void ContainsShouldSearchByToken()
         {
-            var PubSubEvent = new TestablePubSubEvent<string>();
+            var PubSubEvent = new TestableLightweightPubSubEvent<string>();
             var emptyAction = new ActionHelper();
             var token = PubSubEvent.Subscribe(emptyAction.Action);
 
@@ -558,20 +552,20 @@ namespace Prism.Tests.Events
         [Fact]
         public void ContainsShouldSearchByTokenNonGeneric()
         {
-            var pubSubEvent = new TestablePubSubEvent();
+            var lightweightPubSubEvent = new TestableLightweightPubSubEvent();
             var emptyAction = new ActionHelper();
-            var token = pubSubEvent.Subscribe(emptyAction.Action);
+            var token = lightweightPubSubEvent.Subscribe(emptyAction.Action);
 
-            Assert.True(pubSubEvent.Contains(token));
+            Assert.True(lightweightPubSubEvent.Contains(token));
 
-            pubSubEvent.Unsubscribe(emptyAction.Action);
-            Assert.False(pubSubEvent.Contains(token));
+            lightweightPubSubEvent.Unsubscribe(emptyAction.Action);
+            Assert.False(lightweightPubSubEvent.Contains(token));
         }
 
         [Fact]
         public void SubscribeDefaultsToPublisherThread()
         {
-            var PubSubEvent = new TestablePubSubEvent<string>();
+            var PubSubEvent = new TestableLightweightPubSubEvent<string>();
             Action<string> action = delegate { };
             var token = PubSubEvent.Subscribe(action, true);
 
@@ -582,12 +576,12 @@ namespace Prism.Tests.Events
         [Fact]
         public void SubscribeDefaultsToPublisherThreadNonGeneric()
         {
-            var pubSubEvent = new TestablePubSubEvent();
+            var lightweightPubSubEvent = new TestableLightweightPubSubEvent();
             Action action = delegate { };
-            var token = pubSubEvent.Subscribe(action, true);
+            var token = lightweightPubSubEvent.Subscribe(action, true);
 
-            Assert.Single(pubSubEvent.BaseSubscriptions);
-            Assert.Equal(typeof(EventSubscription), pubSubEvent.BaseSubscriptions.ElementAt(0).GetType());
+            Assert.Single(lightweightPubSubEvent.BaseSubscriptions);
+            Assert.Equal(typeof(EventSubscription), lightweightPubSubEvent.BaseSubscriptions.ElementAt(0).GetType());
         }
 
         public class ExternalFilter
@@ -615,7 +609,7 @@ namespace Prism.Tests.Events
             }
         }
 
-        class TestablePubSubEvent<TPayload> : PubSubEvent<TPayload>
+        class TestableLightweightPubSubEvent<TPayload> : LightweightPubSubEvent<TPayload>
         {
             public ICollection<IEventSubscription> BaseSubscriptions
             {
@@ -623,7 +617,7 @@ namespace Prism.Tests.Events
             }
         }
 
-        class TestablePubSubEvent : PubSubEvent
+        class TestableLightweightPubSubEvent : LightweightPubSubEvent
         {
             public ICollection<IEventSubscription> BaseSubscriptions
             {
@@ -645,7 +639,7 @@ namespace Prism.Tests.Events
             return (T)actionArg;
         }
 
-        public void Action(PubSubEventFixture.Payload arg)
+        public void Action(LightweightPubSubEventFixture.Payload arg)
         {
             Action((object)arg);
         }

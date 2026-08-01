@@ -1,7 +1,6 @@
-using Prism.Events.Extensions;
 using Xunit;
 
-namespace Prism.Tests.Events
+namespace Prism.Events.Extensions.Tests
 {
     public class BackgroundEventSubscriptionFixture
     {
@@ -20,14 +19,18 @@ namespace Prism.Tests.Events
             IDelegateReference actionDelegateReference = new MockDelegateReference() { Target = action };
             IDelegateReference filterDelegateReference = new MockDelegateReference() { Target = (Predicate<object>)delegate { return true; } };
 
-            var eventSubscription = new Prism.Events.Extensions.BackgroundEventSubscription<object>(actionDelegateReference, filterDelegateReference);
+            var eventSubscription = new BackgroundEventSubscription<object>(actionDelegateReference, filterDelegateReference);
 
 
-            var publishAction = eventSubscription.GetExecutionStrategy();
+            var publishAction = eventSubscription.Action;
 
             Assert.NotNull(publishAction);
 
-            publishAction.Invoke(null);
+            var filterAction = eventSubscription.Filter;
+
+            Assert.NotNull(filterAction);
+
+            eventSubscription.InvokeAction(null);
 
             completeEvent.WaitOne(5000);
 
@@ -48,13 +51,13 @@ namespace Prism.Tests.Events
 
             IDelegateReference actionDelegateReference = new MockDelegateReference() { Target = action };
 
-            var eventSubscription = new Prism.Events.Extensions.BackgroundEventSubscription(actionDelegateReference);
+            var eventSubscription = new BackgroundEventSubscription(actionDelegateReference);
 
-            var publishAction = eventSubscription.GetExecutionStrategy();
+            var publishAction = eventSubscription.Action;
 
             Assert.NotNull(publishAction);
 
-            publishAction.Invoke(null);
+            eventSubscription.InvokeAction();
 
             completeEvent.WaitOne(5000);
 

@@ -17,7 +17,7 @@ public class LightweightPubSubEvent : EventBase
     /// <param name="action">The delegate that gets executed when the event is published.</param>
     /// <returns>A <see cref="SubscriptionToken"/> that uniquely identifies the added subscription.</returns>
     /// <remarks>
-    /// The PubSubEvent collection is thread-safe.
+    /// The LightweightPubSubEvent collection is thread-safe.
     /// </remarks>
     public SubscriptionToken Subscribe(Action action)
     {
@@ -26,13 +26,13 @@ public class LightweightPubSubEvent : EventBase
 
     /// <summary>
     /// Subscribes a delegate to an event.
-    /// PubSubEvent will maintain a <see cref="WeakReference"/> to the Target of the supplied <paramref name="action"/> delegate.
+    /// LightweightPubSubEvent will maintain a <see cref="WeakReference"/> to the Target of the supplied <paramref name="action"/> delegate.
     /// </summary>
     /// <param name="action">The delegate that gets executed when the event is raised.</param>
     /// <param name="threadOption">Specifies on which thread to receive the delegate callback.</param>
     /// <returns>A <see cref="SubscriptionToken"/> that uniquely identifies the added subscription.</returns>
     /// <remarks>
-    /// The PubSubEvent collection is thread-safe.
+    /// The LightweightPubSubEvent collection is thread-safe.
     /// </remarks>
     public SubscriptionToken Subscribe(Action action, ThreadOption threadOption)
     {
@@ -49,7 +49,7 @@ public class LightweightPubSubEvent : EventBase
     /// If <paramref name="keepSubscriberReferenceAlive"/> is set to <see langword="false" />, <see cref="LightweightPubSubEvent"/> will maintain a <see cref="WeakReference"/> to the Target of the supplied <paramref name="action"/> delegate.
     /// If not using a WeakReference (<paramref name="keepSubscriberReferenceAlive"/> is <see langword="true" />), the user must explicitly call Unsubscribe for the event when disposing the subscriber in order to avoid memory leaks or unexpected behavior.
     /// <para/>
-    /// The PubSubEvent collection is thread-safe.
+    /// The LightweightPubSubEvent collection is thread-safe.
     /// </remarks>
     public SubscriptionToken Subscribe(Action action, bool keepSubscriberReferenceAlive)
     {
@@ -61,13 +61,13 @@ public class LightweightPubSubEvent : EventBase
     /// </summary>
     /// <param name="action">The delegate that gets executed when the event is published.</param>
     /// <param name="threadOption">Specifies on which thread to receive the delegate callback.</param>
-    /// <param name="keepSubscriberReferenceAlive">When <see langword="true"/>, the <see cref="PubSubEvent"/> keeps a reference to the subscriber so it does not get garbage collected.</param>
+    /// <param name="keepSubscriberReferenceAlive">When <see langword="true"/>, the <see cref="LightweightPubSubEvent"/> keeps a reference to the subscriber so it does not get garbage collected.</param>
     /// <returns>A <see cref="SubscriptionToken"/> that uniquely identifies the added subscription.</returns>
     /// <remarks>
-    /// If <paramref name="keepSubscriberReferenceAlive"/> is set to <see langword="false" />, <see cref="PubSubEvent"/> will maintain a <see cref="WeakReference"/> to the Target of the supplied <paramref name="action"/> delegate.
+    /// If <paramref name="keepSubscriberReferenceAlive"/> is set to <see langword="false" />, <see cref="LightweightPubSubEvent"/> will maintain a <see cref="WeakReference"/> to the Target of the supplied <paramref name="action"/> delegate.
     /// If not using a WeakReference (<paramref name="keepSubscriberReferenceAlive"/> is <see langword="true" />), the user must explicitly call Unsubscribe for the event when disposing the subscriber in order to avoid memory leaks or unexpected behavior.
     /// <para/>
-    /// The PubSubEvent collection is thread-safe.
+    /// The LightweightPubSubEvent collection is thread-safe.
     /// </remarks>
     public virtual SubscriptionToken Subscribe(Action action, ThreadOption threadOption, bool keepSubscriberReferenceAlive)
     {

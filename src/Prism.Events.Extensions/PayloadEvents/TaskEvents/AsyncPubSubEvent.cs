@@ -1,5 +1,4 @@
 using System.Buffers;
-using System.Runtime.InteropServices;
 using Prism.Events.Extensions.Properties;
 
 namespace Prism.Events.Extensions;
@@ -54,10 +53,10 @@ public class AsyncPubSubEvent<TPayload> : EventBase
     /// Subscribes a delegate to an event that will be published on the <see cref="ThreadOption.PublisherThread"/>.
     /// </summary>
     /// <param name="action">The delegate that gets executed when the event is published.</param>
-    /// <param name="keepSubscriberReferenceAlive">When <see langword="true"/>, the <see cref="LightweightPubSubEvent{TPayload}"/> keeps a reference to the subscriber so it does not get garbage collected.</param>
+    /// <param name="keepSubscriberReferenceAlive">When <see langword="true"/>, the <see cref="AsyncPubSubEvent{TPayload}"/> keeps a reference to the subscriber so it does not get garbage collected.</param>
     /// <returns>A <see cref="SubscriptionToken"/> that uniquely identifies the added subscription.</returns>
     /// <remarks>
-    /// If <paramref name="keepSubscriberReferenceAlive"/> is set to <see langword="false" />, <see cref="LightweightPubSubEvent{TPayload}"/> will maintain a <see cref="WeakReference"/> to the Target of the supplied <paramref name="action"/> delegate.
+    /// If <paramref name="keepSubscriberReferenceAlive"/> is set to <see langword="false" />, <see cref="AsyncPubSubEvent{TPayload}"/> will maintain a <see cref="WeakReference"/> to the Target of the supplied <paramref name="action"/> delegate.
     /// If not using a WeakReference (<paramref name="keepSubscriberReferenceAlive"/> is <see langword="true" />), the user must explicitly call Unsubscribe for the event when disposing the subscriber in order to avoid memory leaks or unexpected behavior.
     /// <para/>
     /// The PubSubEvent collection is thread-safe.
@@ -72,10 +71,10 @@ public class AsyncPubSubEvent<TPayload> : EventBase
     /// </summary>
     /// <param name="action">The delegate that gets executed when the event is published.</param>
     /// <param name="threadOption">Specifies on which thread to receive the delegate callback.</param>
-    /// <param name="keepSubscriberReferenceAlive">When <see langword="true"/>, the <see cref="LightweightPubSubEvent{TPayload}"/> keeps a reference to the subscriber so it does not get garbage collected.</param>
+    /// <param name="keepSubscriberReferenceAlive">When <see langword="true"/>, the <see cref="AsyncPubSubEvent{TPayload}"/> keeps a reference to the subscriber so it does not get garbage collected.</param>
     /// <returns>A <see cref="SubscriptionToken"/> that uniquely identifies the added subscription.</returns>
     /// <remarks>
-    /// If <paramref name="keepSubscriberReferenceAlive"/> is set to <see langword="false" />, <see cref="LightweightPubSubEvent{TPayload}"/> will maintain a <see cref="WeakReference"/> to the Target of the supplied <paramref name="action"/> delegate.
+    /// If <paramref name="keepSubscriberReferenceAlive"/> is set to <see langword="false" />, <see cref="AsyncPubSubEvent{TPayload}"/> will maintain a <see cref="WeakReference"/> to the Target of the supplied <paramref name="action"/> delegate.
     /// If not using a WeakReference (<paramref name="keepSubscriberReferenceAlive"/> is <see langword="true" />), the user must explicitly call Unsubscribe for the event when disposing the subscriber in order to avoid memory leaks or unexpected behavior.
     /// <para/>
     /// The PubSubEvent collection is thread-safe.
@@ -90,11 +89,11 @@ public class AsyncPubSubEvent<TPayload> : EventBase
     /// </summary>
     /// <param name="action">The delegate that gets executed when the event is published.</param>
     /// <param name="threadOption">Specifies on which thread to receive the delegate callback.</param>
-    /// <param name="keepSubscriberReferenceAlive">When <see langword="true"/>, the <see cref="LightweightPubSubEvent{TPayload}"/> keeps a reference to the subscriber so it does not get garbage collected.</param>
+    /// <param name="keepSubscriberReferenceAlive">When <see langword="true"/>, the <see cref="AsyncPubSubEvent{TPayload}"/> keeps a reference to the subscriber so it does not get garbage collected.</param>
     /// <param name="filter">Filter to evaluate if the subscriber should receive the event.</param>
     /// <returns>A <see cref="SubscriptionToken"/> that uniquely identifies the added subscription.</returns>
     /// <remarks>
-    /// If <paramref name="keepSubscriberReferenceAlive"/> is set to <see langword="false" />, <see cref="LightweightPubSubEvent{TPayload}"/> will maintain a <see cref="WeakReference"/> to the Target of the supplied <paramref name="action"/> delegate.
+    /// If <paramref name="keepSubscriberReferenceAlive"/> is set to <see langword="false" />, <see cref="AsyncPubSubEvent{TPayload}"/> will maintain a <see cref="WeakReference"/> to the Target of the supplied <paramref name="action"/> delegate.
     /// If not using a WeakReference (<paramref name="keepSubscriberReferenceAlive"/> is <see langword="true" />), the user must explicitly call Unsubscribe for the event when disposing the subscriber in order to avoid memory leaks or unexpected behavior.
     ///
     /// The PubSubEvent collection is thread-safe.
@@ -136,7 +135,7 @@ public class AsyncPubSubEvent<TPayload> : EventBase
     }
 
     /// <summary>
-    /// Publishes the <see cref="LightweightPubSubEvent{TPayload}"/>.
+    /// Publishes the <see cref="AsyncPubSubEvent{TPayload}"/>.
     /// </summary>
     /// <param name="payload">Message to pass to the subscribers.</param>
     public virtual async ValueTask Publish(TPayload payload)

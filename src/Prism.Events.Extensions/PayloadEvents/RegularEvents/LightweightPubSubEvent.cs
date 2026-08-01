@@ -156,7 +156,7 @@ public class LightweightPubSubEvent<TPayload> : EventBase
 
             for (int i = 0; snapshot.Length > i; i++)
             {
-                if (snapshot[i] is AsyncEventSubscription<TPayload> actionSubscription)
+                if (snapshot[i] is EventSubscription<TPayload> actionSubscription)
                 {
                     actionSubscription.InvokeAction(payload);
                 }

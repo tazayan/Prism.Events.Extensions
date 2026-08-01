@@ -414,9 +414,7 @@ namespace Prism.Events.Extensions.Tests
             var emptyAction = new ActionHelper();
             var subscriptionAction = new ActionHelper
             {
-                ActionToExecute = (() =>
-                                                  PubSubEvent.Subscribe(
-                                                      emptyAction.Action))
+                ActionToExecute = (() => PubSubEvent.Subscribe(emptyAction.Action))
             };
 
             PubSubEvent.Subscribe(subscriptionAction.Action);

@@ -146,7 +146,10 @@ public class AsyncPubSubEvent<TPayload> : EventBase
         {
             foreach (AsyncEventSubscription<TPayload> subscriber in activeSubscribers)
             {
-                await subscriber.InvokeAction(payload);
+                if(subscriber != null)
+                {
+                    await subscriber.InvokeAction(payload);
+                }
             }
         }
         finally

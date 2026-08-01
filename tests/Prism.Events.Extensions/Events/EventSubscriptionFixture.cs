@@ -253,9 +253,14 @@ namespace Prism.Events.Extensions.Tests
         }
 
         [Fact]
-        public void GetPublishActionReturnsNullIfFilterIsNull()
+        public void GetPublishActionDoesNotExecuteActionIfFilterIsNull()
         {
-            var actionDelegateReference = new MockDelegateReference((Action<object>)delegate { });
+            bool actionExecuted = false;
+            var actionDelegateReference = new MockDelegateReference()
+            {
+                Target = (Action<object>)delegate { actionExecuted = true; }
+            }; 
+            
             var filterDelegateReference = new MockDelegateReference((Predicate<object>)delegate { return true; });
 
             var eventSubscription = new EventSubscription<object>(actionDelegateReference, filterDelegateReference);
@@ -266,9 +271,9 @@ namespace Prism.Events.Extensions.Tests
 
             filterDelegateReference.Target = null;
 
-            publishAction = eventSubscription.Action;
+            eventSubscription.InvokeAction(null);
 
-            Assert.Null(publishAction);
+            Assert.False(actionExecuted);
         }
 
         [Fact]

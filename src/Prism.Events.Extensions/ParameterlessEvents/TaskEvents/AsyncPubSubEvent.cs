@@ -1,5 +1,4 @@
 using System.Buffers;
-using System.Runtime.InteropServices;
 using Prism.Events.Extensions.Properties;
 
 namespace Prism.Events.Extensions;
@@ -117,7 +116,10 @@ public class AsyncPubSubEvent : EventBase
         {
             foreach (AsyncEventSubscription subscriber in activeSubscribers)
             {
-                await subscriber.InvokeAction();
+                if(subscriber != null)
+                {
+                    await subscriber.InvokeAction();
+                }
             }
         }
         finally
@@ -144,11 +146,11 @@ public class AsyncPubSubEvent : EventBase
     /// Removes the first subscriber matching <see cref="Action"/> from the subscribers' list.
     /// </summary>
     /// <param name="subscriber">The <see cref="Action"/> used when subscribing to the event.</param>
-    public virtual void Unsubscribe(Action subscriber)
+    public virtual void Unsubscribe(Func<ValueTask> subscriber)
     {
         lock (Subscriptions)
         {
-            IEventSubscription eventSubscription = Subscriptions.Cast<EventSubscription>().FirstOrDefault(evt => evt.Action == subscriber);
+            IEventSubscription eventSubscription = Subscriptions.Cast<AsyncEventSubscription>().FirstOrDefault(evt => evt.Action == subscriber);
             if (eventSubscription != null)
             {
                 Subscriptions.Remove(eventSubscription);
@@ -161,12 +163,12 @@ public class AsyncPubSubEvent : EventBase
     /// </summary>
     /// <param name="subscriber">The <see cref="Action"/> used when subscribing to the event.</param>
     /// <returns><see langword="true"/> if there is an <see cref="Action"/> that matches; otherwise <see langword="false"/>.</returns>
-    public virtual bool Contains(Action subscriber)
+    public virtual bool Contains(Func<ValueTask> subscriber)
     {
         IEventSubscription eventSubscription;
         lock (Subscriptions)
         {
-            eventSubscription = Subscriptions.Cast<EventSubscription>().FirstOrDefault(evt => evt.Action == subscriber);
+            eventSubscription = Subscriptions.Cast<AsyncEventSubscription>().FirstOrDefault(evt => evt.Action == subscriber);
         }
         return eventSubscription != null;
     }
@@ -179,7 +181,7 @@ public class AsyncPubSubEvent : EventBase
             {
                 for (var i = subscriptions.Count - 1; i >= 0; i--)
                 {
-                    var listItem = ((EventSubscription)subscriptions[i]).Action;
+                    var listItem = ((AsyncEventSubscription)subscriptions[i]).Action;
 
                     if (listItem == null)
                     {

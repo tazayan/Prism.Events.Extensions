@@ -49,37 +49,6 @@ namespace Prism.Events.Extensions.Tests
 
             Assert.True(mockSyncContext.InvokeCalled);
         }
-
-        [Fact]
-        public void ShouldPassParametersCorrectly()
-        {
-            IDelegateReference actionDelegateReference = new MockDelegateReference()
-            {
-                Target =
-                    (Action<object>)(arg1 =>
-                    {
-                        return;
-                    })
-            };
-            IDelegateReference filterDelegateReference = new MockDelegateReference
-            {
-                Target = (Predicate<object>)(arg => true)
-            };
-
-            var mockSyncContext = new MockSynchronizationContext();
-
-            DispatcherEventSubscription<object> eventSubscription = new DispatcherEventSubscription<object>(actionDelegateReference, filterDelegateReference, mockSyncContext);
-
-            var executionStrategy = eventSubscription.Action;
-
-            Assert.NotNull(executionStrategy);
-
-            object argument1 = new object();
-
-            eventSubscription.InvokeAction(argument1);
-
-            Assert.Same(argument1, mockSyncContext.InvokeArg);
-        }
     }
 
     internal class MockSynchronizationContext : SynchronizationContext

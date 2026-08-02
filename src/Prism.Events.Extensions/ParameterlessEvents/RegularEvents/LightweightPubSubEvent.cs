@@ -5,19 +5,22 @@ using Prism.Events.Extensions.Properties;
 namespace Prism.Events.Extensions;
 
 /// <summary>
-/// Defines a class that manages publication and subscription to events.
+/// Represents a parameterless publish/subscribe event with an allocation-optimized publication path.
 /// </summary>
+/// <remarks>
+/// Publication invokes strongly typed subscription methods directly instead of creating
+/// <see cref="IEventSubscription.GetExecutionStrategy"/> delegates for each subscriber.
+/// Each publication operates on a stable snapshot of the subscribers observed at its start.
+/// </remarks>
 public class LightweightPubSubEvent : EventBase
 {
     /// <summary>
     /// Subscribes a delegate to an event that will be published on the <see cref="ThreadOption.PublisherThread"/>.
     /// <see cref="LightweightPubSubEvent"/> will maintain a <see cref="WeakReference"/> to the target of the supplied <paramref name="action"/> delegate.
     /// </summary>
-    /// <param name="action">The delegate that gets executed when the event is published.</param>
+    /// <param name="action">The callback invoked when the event is published.</param>
     /// <returns>A <see cref="SubscriptionToken"/> that uniquely identifies the added subscription.</returns>
-    /// <remarks>
-    /// The LightweightPubSubEvent collection is thread-safe.
-    /// </remarks>
+    /// <exception cref="ArgumentNullException"><paramref name="action"/> is <see langword="null"/>.</exception>
     public SubscriptionToken Subscribe(Action action)
     {
         return Subscribe(action, ThreadOption.PublisherThread);
@@ -25,14 +28,17 @@ public class LightweightPubSubEvent : EventBase
 
     /// <summary>
     /// Subscribes a delegate to an event.
-    /// LightweightPubSubEvent will maintain a <see cref="WeakReference"/> to the Target of the supplied <paramref name="action"/> delegate.
+    /// <see cref="LightweightPubSubEvent"/> maintains a <see cref="WeakReference"/> to the target of
+    /// the supplied <paramref name="action"/> delegate.
     /// </summary>
-    /// <param name="action">The delegate that gets executed when the event is raised.</param>
-    /// <param name="threadOption">Specifies on which thread to receive the delegate callback.</param>
+    /// <param name="action">The callback invoked when the event is published.</param>
+    /// <param name="threadOption">The thread on which the callback is dispatched.</param>
     /// <returns>A <see cref="SubscriptionToken"/> that uniquely identifies the added subscription.</returns>
-    /// <remarks>
-    /// The LightweightPubSubEvent collection is thread-safe.
-    /// </remarks>
+    /// <exception cref="ArgumentNullException"><paramref name="action"/> is <see langword="null"/>.</exception>
+    /// <exception cref="InvalidOperationException">
+    /// <paramref name="threadOption"/> is <see cref="ThreadOption.UIThread"/> and no
+    /// <see cref="EventBase.SynchronizationContext"/> is available.
+    /// </exception>
     public SubscriptionToken Subscribe(Action action, ThreadOption threadOption)
     {
         return Subscribe(action, threadOption, false);
@@ -41,14 +47,16 @@ public class LightweightPubSubEvent : EventBase
     /// <summary>
     /// Subscribes a delegate to an event that will be published on the <see cref="ThreadOption.PublisherThread"/>.
     /// </summary>
-    /// <param name="action">The delegate that gets executed when the event is published.</param>
-    /// <param name="keepSubscriberReferenceAlive">When <see langword="true"/>, the <see cref="LightweightPubSubEvent"/> keeps a reference to the subscriber so it does not get garbage collected.</param>
+    /// <param name="action">The callback invoked when the event is published.</param>
+    /// <param name="keepSubscriberReferenceAlive">
+    /// <see langword="true"/> to keep a strong reference to the callback target; otherwise,
+    /// <see langword="false"/> to use a weak reference.
+    /// </param>
     /// <returns>A <see cref="SubscriptionToken"/> that uniquely identifies the added subscription.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="action"/> is <see langword="null"/>.</exception>
     /// <remarks>
-    /// If <paramref name="keepSubscriberReferenceAlive"/> is set to <see langword="false" />, <see cref="LightweightPubSubEvent"/> will maintain a <see cref="WeakReference"/> to the Target of the supplied <paramref name="action"/> delegate.
-    /// If not using a WeakReference (<paramref name="keepSubscriberReferenceAlive"/> is <see langword="true" />), the user must explicitly call Unsubscribe for the event when disposing the subscriber in order to avoid memory leaks or unexpected behavior.
-    /// <para/>
-    /// The LightweightPubSubEvent collection is thread-safe.
+    /// Strongly referenced callbacks must be explicitly unsubscribed when the subscriber is
+    /// disposed to avoid retaining the subscriber.
     /// </remarks>
     public SubscriptionToken Subscribe(Action action, bool keepSubscriberReferenceAlive)
     {
@@ -58,15 +66,21 @@ public class LightweightPubSubEvent : EventBase
     /// <summary>
     /// Subscribes a delegate to an event.
     /// </summary>
-    /// <param name="action">The delegate that gets executed when the event is published.</param>
-    /// <param name="threadOption">Specifies on which thread to receive the delegate callback.</param>
-    /// <param name="keepSubscriberReferenceAlive">When <see langword="true"/>, the <see cref="LightweightPubSubEvent"/> keeps a reference to the subscriber so it does not get garbage collected.</param>
+    /// <param name="action">The callback invoked when the event is published.</param>
+    /// <param name="threadOption">The thread on which the callback is dispatched.</param>
+    /// <param name="keepSubscriberReferenceAlive">
+    /// <see langword="true"/> to keep a strong reference to the callback target; otherwise,
+    /// <see langword="false"/> to use a weak reference.
+    /// </param>
     /// <returns>A <see cref="SubscriptionToken"/> that uniquely identifies the added subscription.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="action"/> is <see langword="null"/>.</exception>
+    /// <exception cref="InvalidOperationException">
+    /// <paramref name="threadOption"/> is <see cref="ThreadOption.UIThread"/> and no
+    /// <see cref="EventBase.SynchronizationContext"/> is available.
+    /// </exception>
     /// <remarks>
-    /// If <paramref name="keepSubscriberReferenceAlive"/> is set to <see langword="false" />, <see cref="LightweightPubSubEvent"/> will maintain a <see cref="WeakReference"/> to the Target of the supplied <paramref name="action"/> delegate.
-    /// If not using a WeakReference (<paramref name="keepSubscriberReferenceAlive"/> is <see langword="true" />), the user must explicitly call Unsubscribe for the event when disposing the subscriber in order to avoid memory leaks or unexpected behavior.
-    /// <para/>
-    /// The LightweightPubSubEvent collection is thread-safe.
+    /// Strongly referenced callbacks must be explicitly unsubscribed when the subscriber is
+    /// disposed to avoid retaining the subscriber.
     /// </remarks>
     public virtual SubscriptionToken Subscribe(Action action, ThreadOption threadOption, bool keepSubscriberReferenceAlive)
     {
@@ -95,7 +109,7 @@ public class LightweightPubSubEvent : EventBase
     }
 
     /// <summary>
-    /// Publishes the <see cref="LightweightPubSubEvent"/>.
+    /// Publishes the event to a snapshot of the current subscribers.
     /// </summary>
     public virtual void Publish()
     {
@@ -104,6 +118,14 @@ public class LightweightPubSubEvent : EventBase
 
     /// <inheritdoc/>
     protected override void InternalPublish(params object[] arguments)
+    {
+        PublishImplementation();
+    }
+
+    /// <summary>
+    /// Publishes the event through the allocation-optimized subscription path.
+    /// </summary>
+    protected void PublishImplementation()
     {
         var activeSubscribers = LightweightPubSubEvent.PruneSubscribers<EventSubscription>((List<IEventSubscription>)Subscriptions);
 
@@ -130,7 +152,14 @@ public class LightweightPubSubEvent : EventBase
         }
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Adds an event subscription and assigns its unique subscription token.
+    /// </summary>
+    /// <param name="eventSubscription">The subscription to add.</param>
+    /// <returns>The token assigned to <paramref name="eventSubscription"/>.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="eventSubscription"/> is <see langword="null"/>.
+    /// </exception>
     protected override SubscriptionToken InternalSubscribe(IEventSubscription eventSubscription)
     {
         if (eventSubscription == null) throw new ArgumentNullException(nameof(eventSubscription));
@@ -175,6 +204,17 @@ public class LightweightPubSubEvent : EventBase
         return eventSubscription != null;
     }
 
+    /// <summary>
+    /// Removes subscriptions whose callback targets are no longer alive and creates a stable
+    /// snapshot of the remaining subscriptions.
+    /// </summary>
+    /// <typeparam name="TSubscriptionType">
+    /// The concrete subscription type stored in <paramref name="subscriptions"/>.
+    /// </typeparam>
+    /// <param name="subscriptions">The synchronized subscription list to prune and copy.</param>
+    /// <returns>
+    /// A pooled array containing the subscription snapshot and the number of valid entries in that array.
+    /// </returns>
     internal static (IEventSubscription[] Subscribtions, int Count) PruneSubscribers<TSubscriptionType>(List<IEventSubscription> subscriptions) where TSubscriptionType : IEventActionProvider
     {
         if (subscriptions.Count > 0)

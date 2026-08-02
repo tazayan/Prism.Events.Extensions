@@ -4,50 +4,56 @@ using Prism.Events.Extensions.Properties;
 namespace Prism.Events.Extensions;
 
 /// <summary>
-/// Defines a class that manages publication and subscription to events.
+/// Represents a parameterless publish/subscribe event whose subscriber callbacks return
+/// <see cref="ValueTask"/>.
 /// </summary>
+/// <remarks>
+/// Subscribers are invoked sequentially from a stable snapshot. Use <see cref="Send"/> when the
+/// publisher needs a completion handle for the publication operation.
+/// </remarks>
 public class AsyncPubSubEvent : EventBase
 {
     /// <summary>
-    /// Subscribes a delegate to an event that will be published on the <see cref="ThreadOption.PublisherThread"/>.
-    /// <see cref="AsyncPubSubEvent"/> will maintain a <see cref="WeakReference"/> to the target of the supplied <paramref name="action"/> delegate.
+    /// Subscribes a weakly referenced asynchronous callback on the
+    /// <see cref="ThreadOption.PublisherThread"/>.
     /// </summary>
-    /// <param name="action">The delegate that gets executed when the event is published.</param>
+    /// <param name="action">The asynchronous callback invoked when the event is published.</param>
     /// <returns>A <see cref="SubscriptionToken"/> that uniquely identifies the added subscription.</returns>
-    /// <remarks>
-    /// The AsyncPubSubEvent collection is thread-safe.
-    /// </remarks>
+    /// <exception cref="ArgumentNullException"><paramref name="action"/> is <see langword="null"/>.</exception>
     public SubscriptionToken Subscribe(Func<ValueTask> action)
     {
         return Subscribe(action, ThreadOption.PublisherThread);
     }
 
     /// <summary>
-    /// Subscribes a delegate to an event.
-    /// AsyncPubSubEvent will maintain a <see cref="WeakReference"/> to the Target of the supplied <paramref name="action"/> delegate.
+    /// Subscribes a weakly referenced asynchronous callback using the specified thread option.
     /// </summary>
-    /// <param name="action">The delegate that gets executed when the event is raised.</param>
-    /// <param name="threadOption">Specifies on which thread to receive the delegate callback.</param>
+    /// <param name="action">The asynchronous callback invoked when the event is published.</param>
+    /// <param name="threadOption">The thread on which the callback is dispatched.</param>
     /// <returns>A <see cref="SubscriptionToken"/> that uniquely identifies the added subscription.</returns>
-    /// <remarks>
-    /// The AsyncPubSubEvent collection is thread-safe.
-    /// </remarks>
+    /// <exception cref="ArgumentNullException"><paramref name="action"/> is <see langword="null"/>.</exception>
+    /// <exception cref="InvalidOperationException">
+    /// <paramref name="threadOption"/> is <see cref="ThreadOption.UIThread"/> and no
+    /// <see cref="EventBase.SynchronizationContext"/> is available.
+    /// </exception>
     public SubscriptionToken Subscribe(Func<ValueTask> action, ThreadOption threadOption)
     {
         return Subscribe(action, threadOption, false);
     }
 
     /// <summary>
-    /// Subscribes a delegate to an event that will be published on the <see cref="ThreadOption.PublisherThread"/>.
+    /// Subscribes an asynchronous callback on the <see cref="ThreadOption.PublisherThread"/>.
     /// </summary>
-    /// <param name="action">The delegate that gets executed when the event is published.</param>
-    /// <param name="keepSubscriberReferenceAlive">When <see langword="true"/>, the <see cref="AsyncPubSubEvent"/> keeps a reference to the subscriber so it does not get garbage collected.</param>
+    /// <param name="action">The asynchronous callback invoked when the event is published.</param>
+    /// <param name="keepSubscriberReferenceAlive">
+    /// <see langword="true"/> to keep a strong reference to the callback target; otherwise,
+    /// <see langword="false"/> to use a weak reference.
+    /// </param>
     /// <returns>A <see cref="SubscriptionToken"/> that uniquely identifies the added subscription.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="action"/> is <see langword="null"/>.</exception>
     /// <remarks>
-    /// If <paramref name="keepSubscriberReferenceAlive"/> is set to <see langword="false" />, <see cref="AsyncPubSubEvent"/> will maintain a <see cref="WeakReference"/> to the Target of the supplied <paramref name="action"/> delegate.
-    /// If not using a WeakReference (<paramref name="keepSubscriberReferenceAlive"/> is <see langword="true" />), the user must explicitly call Unsubscribe for the event when disposing the subscriber in order to avoid memory leaks or unexpected behavior.
-    /// <para/>
-    /// The PubSubEvent collection is thread-safe.
+    /// Strongly referenced callbacks must be explicitly unsubscribed when the subscriber is
+    /// disposed to avoid retaining the subscriber.
     /// </remarks>
     public SubscriptionToken Subscribe(Func<ValueTask> action, bool keepSubscriberReferenceAlive)
     {
@@ -55,17 +61,23 @@ public class AsyncPubSubEvent : EventBase
     }
 
     /// <summary>
-    /// Subscribes a delegate to an event.
+    /// Subscribes an asynchronous callback using the specified thread option and reference strength.
     /// </summary>
-    /// <param name="action">The delegate that gets executed when the event is published.</param>
-    /// <param name="threadOption">Specifies on which thread to receive the delegate callback.</param>
-    /// <param name="keepSubscriberReferenceAlive">When <see langword="true"/>, the <see cref="AsyncPubSubEvent"/> keeps a reference to the subscriber so it does not get garbage collected.</param>
+    /// <param name="action">The asynchronous callback invoked when the event is published.</param>
+    /// <param name="threadOption">The thread on which the callback is dispatched.</param>
+    /// <param name="keepSubscriberReferenceAlive">
+    /// <see langword="true"/> to keep a strong reference to the callback target; otherwise,
+    /// <see langword="false"/> to use a weak reference.
+    /// </param>
     /// <returns>A <see cref="SubscriptionToken"/> that uniquely identifies the added subscription.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="action"/> is <see langword="null"/>.</exception>
+    /// <exception cref="InvalidOperationException">
+    /// <paramref name="threadOption"/> is <see cref="ThreadOption.UIThread"/> and no
+    /// <see cref="EventBase.SynchronizationContext"/> is available.
+    /// </exception>
     /// <remarks>
-    /// If <paramref name="keepSubscriberReferenceAlive"/> is set to <see langword="false" />, <see cref="AsyncPubSubEvent"/> will maintain a <see cref="WeakReference"/> to the Target of the supplied <paramref name="action"/> delegate.
-    /// If not using a WeakReference (<paramref name="keepSubscriberReferenceAlive"/> is <see langword="true" />), the user must explicitly call Unsubscribe for the event when disposing the subscriber in order to avoid memory leaks or unexpected behavior.
-    /// <para/>
-    /// The PubSubEvent collection is thread-safe.
+    /// Strongly referenced callbacks must be explicitly unsubscribed when the subscriber is
+    /// disposed to avoid retaining the subscriber.
     /// </remarks>
     public virtual SubscriptionToken Subscribe(Func<ValueTask> action, ThreadOption threadOption, bool keepSubscriberReferenceAlive)
     {
@@ -94,31 +106,47 @@ public class AsyncPubSubEvent : EventBase
     }
 
     /// <summary>
-    /// Asynchronusly published the event to all subscribers.
-    /// the same way as <see cref="EventBase.Publish"/> does.
+    /// Begins publishing the event to the current subscribers without returning a completion handle.
     /// </summary>
+    /// <remarks>
+    /// Use <see cref="Send"/> to observe completion. Because this method is <see langword="async"/>
+    /// <see langword="void"/>, exceptions raised after it returns cannot be observed through a task.
+    /// </remarks>
     public async virtual void Publish()
     {
         await PublishImplementation();
     }
 
     /// <summary>
-    /// Asynchronusly published the event to all subscribers and returns a task representing the asynchronous operation which completes when the all events handler completes.
-    /// This is new API and should be used instead of <see cref="Publish"/> when publisher needs to know when the operation is complete.
+    /// Publishes the event and returns a handle for the asynchronous publication operation.
     /// </summary>
-    /// <returns></returns>
+    /// <returns>
+    /// A <see cref="ValueTask"/> that completes after publisher-thread callbacks have completed and
+    /// scheduler-backed callbacks have been invoked by their scheduler.
+    /// </returns>
+    /// <remarks>
+    /// Use this method instead of <see cref="Publish"/> when the publisher needs to observe
+    /// completion or exceptions. Scheduler-backed subscriptions currently do not await the
+    /// <see cref="ValueTask"/> returned by their callbacks.
+    /// </remarks>
     public virtual ValueTask Send()
     {
         return PublishImplementation();
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Begins asynchronous publication through the <see cref="EventBase"/> compatibility path.
+    /// </summary>
+    /// <param name="arguments">Ignored because this event has no payload.</param>
     protected override async void InternalPublish(params object[] arguments)
     {
         await PublishImplementation();
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Publishes the event sequentially to a snapshot of the active subscriptions.
+    /// </summary>
+    /// <returns>A <see cref="ValueTask"/> representing the publication loop.</returns>
     private async ValueTask PublishImplementation()
     {
         var activeSubscribers = LightweightPubSubEvent.PruneSubscribers<AsyncEventSubscription>((List<IEventSubscription>)Subscriptions);
@@ -146,7 +174,14 @@ public class AsyncPubSubEvent : EventBase
         }
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Adds an asynchronous event subscription and assigns its unique subscription token.
+    /// </summary>
+    /// <param name="eventSubscription">The subscription to add.</param>
+    /// <returns>The token assigned to <paramref name="eventSubscription"/>.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="eventSubscription"/> is <see langword="null"/>.
+    /// </exception>
     protected override SubscriptionToken InternalSubscribe(IEventSubscription eventSubscription)
     {
         if (eventSubscription == null) throw new ArgumentNullException(nameof(eventSubscription));
@@ -161,9 +196,9 @@ public class AsyncPubSubEvent : EventBase
     }
 
     /// <summary>
-    /// Removes the first subscriber matching <see cref="Action"/> from the subscribers' list.
+    /// Removes the first subscriber whose callback matches <paramref name="subscriber"/>.
     /// </summary>
-    /// <param name="subscriber">The <see cref="Action"/> used when subscribing to the event.</param>
+    /// <param name="subscriber">The asynchronous callback used when subscribing to the event.</param>
     public virtual void Unsubscribe(Func<ValueTask> subscriber)
     {
         lock (Subscriptions)
@@ -177,10 +212,10 @@ public class AsyncPubSubEvent : EventBase
     }
 
     /// <summary>
-    /// Returns <see langword="true"/> if there is a subscriber matching <see cref="Action"/>.
+    /// Determines whether the event contains a callback matching <paramref name="subscriber"/>.
     /// </summary>
-    /// <param name="subscriber">The <see cref="Action"/> used when subscribing to the event.</param>
-    /// <returns><see langword="true"/> if there is an <see cref="Action"/> that matches; otherwise <see langword="false"/>.</returns>
+    /// <param name="subscriber">The asynchronous callback used when subscribing to the event.</param>
+    /// <returns><see langword="true"/> when a matching callback exists; otherwise, <see langword="false"/>.</returns>
     public virtual bool Contains(Func<ValueTask> subscriber)
     {
         IEventSubscription eventSubscription;

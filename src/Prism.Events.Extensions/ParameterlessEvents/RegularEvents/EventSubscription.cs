@@ -9,15 +9,14 @@ namespace Prism.Events.Extensions;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Unlike the standard Prism <see cref=" Prism.Events.EventSubscription"/> contract, this type is designed so that
+/// Unlike the standard Prism <see cref="Prism.Events.EventSubscription"/> implementation, this type is designed so that
 /// <see cref="LightweightPubSubEvent"/> casts each subscription to <see cref="EventSubscription"/> and
 /// calls <see cref="InvokeAction"/> directly during publish, bypassing
 /// <see cref="IEventSubscription.GetExecutionStrategy"/>.
 /// </para>
 /// <para>
-/// This avoids the per-publish allocation of an <see cref="Action{T}"/> wrapper delegate and an
-/// <c>object[]</c> arguments array that the standard <see cref="IEventSubscription"/> dispatch flow
-/// would otherwise produce.
+/// This avoids creating an <see cref="Action{T}"/> wrapper delegate for each subscriber during
+/// every publication.
 /// </para>
 /// </remarks>
 class EventSubscription : IEventSubscription, IEventActionProvider
@@ -28,12 +27,12 @@ class EventSubscription : IEventSubscription, IEventActionProvider
     /// Initializes a new instance of <see cref="EventSubscription"/> with the specified delegate reference.
     /// </summary>
     /// <param name="actionReference">
-    /// A reference to the subscriber <see cref="Action"/> delegate. Must not be <see langword="null"/>
-    /// and its <see cref="IDelegateReference.Target"/> must be of type <see cref="Action"/>.
+    /// A reference to the subscriber <see cref="System.Action"/> delegate. Must not be <see langword="null"/>
+    /// and its <see cref="IDelegateReference.Target"/> must be of type <see cref="System.Action"/>.
     /// </param>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="actionReference"/> is <see langword="null"/>.</exception>
     /// <exception cref="ArgumentException">
-    /// Thrown when <paramref name="actionReference"/> does not reference an <see cref="Action"/> delegate.
+    /// Thrown when <paramref name="actionReference"/> does not reference an <see cref="System.Action"/> delegate.
     /// </exception>
     public EventSubscription(IDelegateReference actionReference)
     {
@@ -46,10 +45,10 @@ class EventSubscription : IEventSubscription, IEventActionProvider
     }
 
     /// <summary>
-    /// Gets the target <see cref="Action"/> delegate referenced by the underlying <see cref="IDelegateReference"/>.
+    /// Gets the target <see cref="System.Action"/> delegate referenced by the underlying <see cref="IDelegateReference"/>.
     /// </summary>
     /// <value>
-    /// The subscriber <see cref="Action"/>, or <see langword="null"/> if the weak-reference target
+    /// The subscriber <see cref="System.Action"/>, or <see langword="null"/> if the weak-reference target
     /// has been garbage collected.
     /// </value>
     public Action Action
@@ -58,25 +57,25 @@ class EventSubscription : IEventSubscription, IEventActionProvider
     }
 
     /// <summary>
-    /// Gets or sets the <see cref="SubscriptionToken"/> that uniquely identifies this subscription.
+    /// Gets or sets the <see cref="Prism.Events.SubscriptionToken"/> that uniquely identifies this subscription.
     /// </summary>
     /// <value>A token that identifies this <see cref="IEventSubscription"/>.</value>
     public SubscriptionToken SubscriptionToken { get; set; }
 
     /// <summary>
-    /// Returns an <see cref="Action{T}"/> execution strategy for compatibility with the
+    /// Returns an <see cref="Action{T}"/> execution strategy whose argument is an <c>object[]</c>,
+    /// for compatibility with the
     /// <see cref="IEventSubscription"/> interface contract.
     /// </summary>
     /// <returns>
-    /// An <see cref="Action{T}"/> that ignores its <c>object[]</c> arguments and delegates to
+    /// An <see cref="Action{T}"/> that ignores its <c>object[]</c> argument and delegates to
     /// <see cref="InvokeAction"/>, or <see langword="null"/> if the subscriber delegate is no longer alive.
     /// </returns>
     /// <remarks>
     /// This explicit interface implementation exists solely for <see cref="IEventSubscription"/> compatibility.
     /// It is <b>not</b> used by <see cref="LightweightPubSubEvent"/>, which instead casts subscriptions
     /// directly to <see cref="EventSubscription"/> and calls <see cref="InvokeAction"/> to avoid
-    /// allocating a wrapping <see cref="Action{T}"/> delegate and an <c>object[]</c> parameters array
-    /// on every publish.
+    /// allocating a wrapping <see cref="Action{T}"/> delegate for every subscriber on each publish.
     /// </remarks>
     Action<object[]> IEventSubscription.GetExecutionStrategy()
     {
@@ -94,15 +93,15 @@ class EventSubscription : IEventSubscription, IEventActionProvider
     }
 
     /// <summary>
-    /// Invokes the subscriber's <see cref="Action"/> delegate on the calling (publisher's) thread.
+    /// Invokes the subscriber's <see cref="System.Action"/> delegate on the calling thread.
     /// </summary>
     /// <remarks>
     /// <para>
     /// <see cref="LightweightPubSubEvent.InternalPublish"/> calls this method directly by casting each
     /// <see cref="IEventSubscription"/> to <see cref="EventSubscription"/>, bypassing the
     /// <see cref="IEventSubscription.GetExecutionStrategy"/> delegate chain. This eliminates the
-    /// per-publish allocation of an <see cref="Action{T}"/> wrapper and an <c>object[]</c> arguments
-    /// array that the standard Prism event dispatch flow would otherwise produce.
+    /// per-subscriber allocation of an <see cref="Action{T}"/> wrapper that the standard Prism event
+    /// dispatch flow would otherwise produce during publication.
     /// </para>
     /// <para>
     /// This method is <see langword="virtual"/> so that derived classes can override the threading
@@ -110,7 +109,7 @@ class EventSubscription : IEventSubscription, IEventActionProvider
     /// a thread-pool thread via <see cref="Task.Run(Action)"/>.
     /// </para>
     /// <para>
-    /// If the subscriber delegate is no longer alive (i.e., <see cref="Action"/> returns
+    /// If the subscriber delegate is no longer alive (i.e., <see cref="EventSubscription.Action"/> returns
     /// <see langword="null"/>), the invocation is silently skipped.
     /// </para>
     /// </remarks>
@@ -124,6 +123,13 @@ class EventSubscription : IEventSubscription, IEventActionProvider
         }
     }
 
+    /// <summary>
+    /// Determines whether the subscriber callback is still alive.
+    /// </summary>
+    /// <returns>
+    /// <see langword="true"/> when <see cref="EventSubscription.Action"/> is available; otherwise,
+    /// <see langword="false"/>.
+    /// </returns>
     public bool IsActionAlive()
     {
         return Action != null;

@@ -3,11 +3,31 @@ using Prism.Events.Extensions.Properties;
 
 namespace Prism.Events.Extensions;
 
+/// <summary>
+/// Represents a subscription to an event carrying a payload, with a strongly typed callback and
+/// filter path used by <see cref="LightweightPubSubEvent{TPayload}"/>.
+/// </summary>
+/// <typeparam name="TPayload">The type of payload delivered to the subscriber.</typeparam>
 class EventSubscription<TPayload> : IEventSubscription, IEventActionProvider
 {
     private readonly IDelegateReference actionReference;
     private readonly IDelegateReference filterReference;
 
+    /// <summary>
+    /// Initializes a new instance of <see cref="EventSubscription{TPayload}"/>.
+    /// </summary>
+    /// <param name="actionReference">
+    /// A reference to an <see cref="Action{TPayload}"/> subscriber callback.
+    /// </param>
+    /// <param name="filterReference">
+    /// A reference to a <see cref="Predicate{TPayload}"/> that determines whether the callback is invoked.
+    /// </param>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="actionReference"/> or <paramref name="filterReference"/> is <see langword="null"/>.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// A delegate reference does not contain the required delegate type.
+    /// </exception>
     public EventSubscription(IDelegateReference actionReference, IDelegateReference filterReference)
     {
         if (actionReference == null)
@@ -26,29 +46,48 @@ class EventSubscription<TPayload> : IEventSubscription, IEventActionProvider
 
 
     /// <summary>
-    /// Gets the target <see cref="System.Action{T}"/> that is referenced by the <see cref="IDelegateReference"/>.
+    /// Gets the target <see cref="Action{TPayload}"/> referenced by the callback's
+    /// <see cref="IDelegateReference"/>.
     /// </summary>
-    /// <value>An <see cref="System.Action{T}"/> or <see langword="null" /> if the referenced target is not alive.</value>
+    /// <value>
+    /// The subscriber callback, or <see langword="null"/> if its weakly referenced target is no longer alive.
+    /// </value>
     public Action<TPayload> Action
     {
         get { return (Action<TPayload>)actionReference.Target; }
     }
 
     /// <summary>
-    /// Gets the target <see cref="Predicate{T}"/> that is referenced by the <see cref="IDelegateReference"/>.
+    /// Gets the target <see cref="Predicate{TPayload}"/> referenced by the filter's
+    /// <see cref="IDelegateReference"/>.
     /// </summary>
-    /// <value>An <see cref="Predicate{T}"/> or <see langword="null" /> if the referenced target is not alive.</value>
+    /// <value>
+    /// The subscription filter, or <see langword="null"/> if its weakly referenced target is no longer alive.
+    /// </value>
     public Predicate<TPayload> Filter
     {
         get { return (Predicate<TPayload>)filterReference.Target; }
     }
 
     /// <summary>
-    /// Gets or sets a <see cref="SubscriptionToken"/> that identifies this <see cref="IEventSubscription"/>.
+    /// Gets or sets a <see cref="Prism.Events.SubscriptionToken"/> that identifies this subscription.
     /// </summary>
     /// <value>A token that identifies this <see cref="IEventSubscription"/>.</value>
     public SubscriptionToken SubscriptionToken { get; set; }
 
+    /// <summary>
+    /// Returns an object-array execution strategy for compatibility with
+    /// <see cref="IEventSubscription"/>.
+    /// </summary>
+    /// <returns>
+    /// A strategy that extracts the first argument as <typeparamref name="TPayload"/> and invokes
+    /// <see cref="InvokeAction(TPayload)"/>, or <see langword="null"/> when the callback or filter is
+    /// no longer alive.
+    /// </returns>
+    /// <remarks>
+    /// <see cref="LightweightPubSubEvent{TPayload}.Publish(TPayload)"/> does not use this compatibility
+    /// path; it invokes the strongly typed method directly.
+    /// </remarks>
     Action<object[]> IEventSubscription.GetExecutionStrategy()
     {
         Action<TPayload> action = Action;
@@ -69,6 +108,11 @@ class EventSubscription<TPayload> : IEventSubscription, IEventActionProvider
         return null;
     }
 
+    /// <summary>
+    /// Evaluates the subscription filter and synchronously invokes the callback when the filter
+    /// returns <see langword="true"/>.
+    /// </summary>
+    /// <param name="payload">The payload supplied by the publisher.</param>
     public virtual void InvokeAction(TPayload payload)
     {
         var action = Action;
@@ -83,6 +127,13 @@ class EventSubscription<TPayload> : IEventSubscription, IEventActionProvider
         }
     }
 
+    /// <summary>
+    /// Determines whether the subscriber callback is still alive.
+    /// </summary>
+    /// <returns>
+    /// <see langword="true"/> when <see cref="Action"/> is available; otherwise,
+    /// <see langword="false"/>.
+    /// </returns>
     public bool IsActionAlive()
     {
         return Action != null;

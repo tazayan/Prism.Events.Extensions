@@ -3,7 +3,7 @@ using Prism.Events.Extensions.Properties;
 
 namespace Prism.Events.Extensions;
 
-class AsyncEventSubscription : IEventSubscription
+class AsyncEventSubscription : IEventSubscription, IEventActionProvider
 {
     private readonly IDelegateReference actionReference;
 
@@ -48,5 +48,10 @@ class AsyncEventSubscription : IEventSubscription
         }
 
         return ValueTask.CompletedTask;
+    }
+
+    public bool IsActionAlive()
+    {
+        return Action != null;
     }
 }

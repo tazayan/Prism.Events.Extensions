@@ -94,9 +94,20 @@ public class AsyncPubSubEvent : EventBase
     }
 
     /// <summary>
-    /// Publishes the <see cref="AsyncPubSubEvent"/>.
+    /// Asynchronusly published the event to all subscribers.
+    /// the same way as <see cref="EventBase.Publish"/> does.
     /// </summary>
-    public virtual ValueTask Publish()
+    public async virtual void Publish()
+    {
+        await PublishImplementation();
+    }
+
+    /// <summary>
+    /// Asynchronusly published the event to all subscribers and returns a task representing the asynchronous operation which completes when the all events handler completes.
+    /// This is new API and should be used instead of <see cref="Publish"/> when publisher needs to know when the operation is complete.
+    /// </summary>
+    /// <returns></returns>
+    public virtual ValueTask Send()
     {
         return PublishImplementation();
     }
@@ -110,13 +121,17 @@ public class AsyncPubSubEvent : EventBase
     /// <inheritdoc/>
     private async ValueTask PublishImplementation()
     {
-        var activeSubscribers = PruneSubscribers((List<IEventSubscription>)Subscriptions);
+        var activeSubscribers = LightweightPubSubEvent.PruneSubscribers<AsyncEventSubscription>((List<IEventSubscription>)Subscriptions);
 
         try
         {
-            foreach (AsyncEventSubscription subscriber in activeSubscribers)
+            var subscribtions = activeSubscribers.Subscribtions;
+
+            for (int i = 0; i < activeSubscribers.Count; i++)
             {
-                if(subscriber != null)
+                AsyncEventSubscription subscriber = subscribtions[i] as AsyncEventSubscription;
+
+                if (subscriber != null)
                 {
                     await subscriber.InvokeAction();
                 }
@@ -124,7 +139,10 @@ public class AsyncPubSubEvent : EventBase
         }
         finally
         {
-            ArrayPool<IEventSubscription>.Shared.Return(activeSubscribers);
+            if (activeSubscribers.Count > 0)
+            {
+                ArrayPool<IEventSubscription>.Shared.Return(activeSubscribers.Subscribtions, clearArray: true);
+            }
         }
     }
 
@@ -171,32 +189,5 @@ public class AsyncPubSubEvent : EventBase
             eventSubscription = Subscriptions.Cast<AsyncEventSubscription>().FirstOrDefault(evt => evt.Action == subscriber);
         }
         return eventSubscription != null;
-    }
-
-    internal static IEventSubscription[] PruneSubscribers(List<IEventSubscription> subscriptions)
-    {
-        if (subscriptions.Count > 0)
-        {
-            lock (subscriptions)
-            {
-                for (var i = subscriptions.Count - 1; i >= 0; i--)
-                {
-                    var listItem = ((AsyncEventSubscription)subscriptions[i]).Action;
-
-                    if (listItem == null)
-                    {
-                        // Prune from main list
-                        subscriptions.RemoveAt(i);
-                    }
-                }
-
-                ArrayPool<IEventSubscription> pool = ArrayPool<IEventSubscription>.Shared;
-                var rentedArray = pool.Rent(subscriptions.Count);
-                subscriptions.CopyTo(rentedArray);
-                return rentedArray;
-            }
-        }
-
-        return Array.Empty<IEventSubscription>();
     }
 }

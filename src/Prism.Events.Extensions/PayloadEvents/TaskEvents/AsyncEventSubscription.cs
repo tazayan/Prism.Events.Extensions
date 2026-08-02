@@ -3,7 +3,7 @@ using Prism.Events.Extensions.Properties;
 
 namespace Prism.Events.Extensions;
 
-class AsyncEventSubscription<TPayload> : IEventSubscription
+class AsyncEventSubscription<TPayload> : IEventSubscription, IEventActionProvider
 {
     private readonly IDelegateReference actionReference;
     private readonly IDelegateReference filterReference;
@@ -12,7 +12,7 @@ class AsyncEventSubscription<TPayload> : IEventSubscription
     {
         if (actionReference == null)
             throw new ArgumentNullException(nameof(actionReference));
-        if (!(actionReference.Target is Action<TPayload>))
+        if (!(actionReference.Target is Func<TPayload, ValueTask>))
             throw new ArgumentException(string.Format(CultureInfo.CurrentCulture, Resources.InvalidDelegateRerefenceTypeException, typeof(Action).FullName), nameof(actionReference));
 
         if (filterReference == null)
@@ -51,6 +51,21 @@ class AsyncEventSubscription<TPayload> : IEventSubscription
 
     Action<object[]> IEventSubscription.GetExecutionStrategy()
     {
+        Func<TPayload, ValueTask> action = Action;
+        Predicate<TPayload> filter = Filter;
+        if (action != null && filter != null)
+        {
+            return arguments =>
+            {
+                TPayload argument = default(TPayload);
+                if (arguments != null && arguments.Length > 0 && arguments[0] != null)
+                {
+                    argument = (TPayload)arguments[0];
+                }
+
+                InvokeAction(argument);
+            };
+        }
         return null;
     }
 
@@ -68,5 +83,10 @@ class AsyncEventSubscription<TPayload> : IEventSubscription
         }
 
         return ValueTask.CompletedTask;
+    }
+
+    public bool IsActionAlive()
+    {
+        return Action != null;
     }
 }

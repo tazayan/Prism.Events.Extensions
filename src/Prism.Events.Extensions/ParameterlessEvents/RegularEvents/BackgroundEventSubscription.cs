@@ -31,7 +31,7 @@ internal class BackgroundEventSubscription : EventSubscription
 
         if (action != null)
         {
-            Task.Run(action);
+            _ = Task.Run(action);
         }
     }
 }

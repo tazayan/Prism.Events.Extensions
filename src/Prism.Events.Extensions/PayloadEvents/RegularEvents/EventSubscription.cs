@@ -3,7 +3,7 @@ using Prism.Events.Extensions.Properties;
 
 namespace Prism.Events.Extensions;
 
-class EventSubscription<TPayload> : IEventSubscription
+class EventSubscription<TPayload> : IEventSubscription, IEventActionProvider
 {
     private readonly IDelegateReference actionReference;
     private readonly IDelegateReference filterReference;
@@ -62,10 +62,8 @@ class EventSubscription<TPayload> : IEventSubscription
                 {
                     argument = (TPayload)arguments[0];
                 }
-                if (filter(argument))
-                {
-                    InvokeAction(argument);
-                }
+
+                InvokeAction(argument);
             };
         }
         return null;
@@ -83,5 +81,10 @@ class EventSubscription<TPayload> : IEventSubscription
                 action(payload);
             }
         }
+    }
+
+    public bool IsActionAlive()
+    {
+        return Action != null;
     }
 }

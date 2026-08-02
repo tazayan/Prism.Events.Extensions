@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Runtime.InteropServices;
 using Prism.Events.Extensions.Properties;
 
@@ -8,8 +9,6 @@ namespace Prism.Events.Extensions;
 /// </summary>
 public class LightweightPubSubEvent : EventBase
 {
-    private volatile uint activePublishers;
-
     /// <summary>
     /// Subscribes a delegate to an event that will be published on the <see cref="ThreadOption.PublisherThread"/>.
     /// <see cref="LightweightPubSubEvent"/> will maintain a <see cref="WeakReference"/> to the target of the supplied <paramref name="action"/> delegate.
@@ -106,32 +105,29 @@ public class LightweightPubSubEvent : EventBase
     /// <inheritdoc/>
     protected override void InternalPublish(params object[] arguments)
     {
-        Interlocked.Increment(ref activePublishers);
+        var activeSubscribers = LightweightPubSubEvent.PruneSubscribers<EventSubscription>((List<IEventSubscription>)Subscriptions);
 
         try
         {
-            List<IEventSubscription> subscriptions = (List<IEventSubscription>)Subscriptions;
+            var subscribtions = activeSubscribers.Subscribtions;
 
-            //The collection of subscriptions may be modified by the subscribe operation which is performing only add operation
-            //and it is okay to not observe that new element as prism events don't have contarctual agreemnt to observe it.
-            //And in a worst case scenario when List is resized, the snapshot will still be valid and prevet old array from being GC'd.
-            var snapshot = CollectionsMarshal.AsSpan(subscriptions);
-
-            for (int i = 0; snapshot.Length > i; i++)
+            for (int i = 0; i < activeSubscribers.Count; i++)
             {
-                if (snapshot[i] is EventSubscription actionSubscription)
+                EventSubscription subscriber = subscribtions[i] as EventSubscription;
+
+                if (subscriber != null)
                 {
-                    actionSubscription.InvokeAction();
+                    subscriber.InvokeAction();
                 }
             }
         }
         finally
         {
-            Interlocked.Decrement(ref activePublishers);
+            if (activeSubscribers.Count > 0)
+            {
+                ArrayPool<IEventSubscription>.Shared.Return(activeSubscribers.Subscribtions, clearArray: true);
+            }
         }
-
-        if (activePublishers == 0)
-            PruneSubscribers();
     }
 
     /// <inheritdoc/>
@@ -179,25 +175,38 @@ public class LightweightPubSubEvent : EventBase
         return eventSubscription != null;
     }
 
-    private void PruneSubscribers()
+    internal static (IEventSubscription[] Subscribtions, int Count) PruneSubscribers<TSubscriptionType>(List<IEventSubscription> subscriptions) where TSubscriptionType : IEventActionProvider
     {
-        if (Subscriptions.Count > 0)
+        if (subscriptions.Count > 0)
         {
-            lock (Subscriptions)
+            lock (subscriptions)
             {
-                List<IEventSubscription> subscriptions = (List<IEventSubscription>)Subscriptions;
-
-                for (var i = subscriptions.Count - 1; i >= 0; i--)
+                if (subscriptions.Count > 0)
                 {
-                    var listItem = ((EventSubscription)subscriptions[i]).Action;
 
-                    if (listItem == null)
+                    for (var i = subscriptions.Count - 1; i >= 0; i--)
                     {
-                        // Prune from main list. Log?
-                        subscriptions.RemoveAt(i);
+                        var isActionAlive = ((TSubscriptionType)subscriptions[i]).IsActionAlive();
+
+                        if (!isActionAlive)
+                        {
+                            // Prune from main list
+                            subscriptions.RemoveAt(i);
+                        }
                     }
+
+                    ArrayPool<IEventSubscription> pool = ArrayPool<IEventSubscription>.Shared;
+                    var rentedArray = pool.Rent(subscriptions.Count);
+                    subscriptions.CopyTo(rentedArray);
+                    return (rentedArray, subscriptions.Count);
+                }
+                else
+                {
+                    return (Array.Empty<IEventSubscription>(), 0);
                 }
             }
         }
+
+        return (Array.Empty<IEventSubscription>(), 0);
     }
 }

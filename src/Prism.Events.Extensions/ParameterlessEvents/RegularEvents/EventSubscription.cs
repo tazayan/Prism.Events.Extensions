@@ -20,7 +20,7 @@ namespace Prism.Events.Extensions;
 /// would otherwise produce.
 /// </para>
 /// </remarks>
-class EventSubscription : IEventSubscription
+class EventSubscription : IEventSubscription, IEventActionProvider
 {
     private readonly IDelegateReference actionReference;
 
@@ -122,5 +122,10 @@ class EventSubscription : IEventSubscription
         {
             action();
         }
+    }
+
+    public bool IsActionAlive()
+    {
+        return Action != null;
     }
 }

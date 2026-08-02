@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Runtime.InteropServices;
 using Prism.Events.Extensions.Properties;
 
@@ -9,9 +10,6 @@ namespace Prism.Events.Extensions;
 
 public class LightweightPubSubEvent<TPayload> : EventBase
 {
-    private volatile uint activePublishers;
-
-
     /// <summary>
     /// Subscribes a delegate to an event that will be published on the <see cref="ThreadOption.PublisherThread"/>.
     /// <see cref="LightweightPubSubEvent{TPayload}"/> will maintain a <see cref="WeakReference"/> to the target of the supplied <paramref name="action"/> delegate.
@@ -143,32 +141,29 @@ public class LightweightPubSubEvent<TPayload> : EventBase
     /// <param name="payload">Message to pass to the subscribers.</param>
     public virtual void Publish(TPayload payload)
     {
-        Interlocked.Increment(ref activePublishers);
+        var activeSubscribers = LightweightPubSubEvent.PruneSubscribers<EventSubscription<TPayload>>((List<IEventSubscription>)Subscriptions);
 
         try
         {
-            List<IEventSubscription> subscriptions = (List<IEventSubscription>)Subscriptions;
+            var subscribtions = activeSubscribers.Subscribtions;
 
-            //The collection of subscriptions may be modified by the subscribe operation which is performing only add operation
-            //and it is okay to not observe that new element as prism events don't have contarctual agreemnt to observe it.
-            //And in a worst case scenario when List is resized, the snapshot will still be valid and prevet old array from being GC'd.
-            var snapshot = CollectionsMarshal.AsSpan(subscriptions);
-
-            for (int i = 0; snapshot.Length > i; i++)
+            for (int i = 0; i < activeSubscribers.Count; i++)
             {
-                if (snapshot[i] is EventSubscription<TPayload> actionSubscription)
+                EventSubscription<TPayload> subscriber = subscribtions[i] as EventSubscription<TPayload>;
+
+                if (subscriber != null)
                 {
-                    actionSubscription.InvokeAction(payload);
+                    subscriber.InvokeAction(payload);
                 }
             }
         }
         finally
         {
-            Interlocked.Decrement(ref activePublishers);
+            if (activeSubscribers.Count > 0)
+            {
+                ArrayPool<IEventSubscription>.Shared.Return(activeSubscribers.Subscribtions, clearArray: true);
+            }
         }
-
-        if (activePublishers == 0)
-            PruneSubscribers();
     }
 
     /// <inheritdoc/>
@@ -214,27 +209,5 @@ public class LightweightPubSubEvent<TPayload> : EventBase
             eventSubscription = Subscriptions.Cast<EventSubscription<TPayload>>().FirstOrDefault(evt => evt.Action == subscriber);
         }
         return eventSubscription != null;
-    }
-
-    private void PruneSubscribers()
-    {
-        if (Subscriptions.Count > 0)
-        {
-            lock (Subscriptions)
-            {
-                List<IEventSubscription> subscriptions = (List<IEventSubscription>)Subscriptions;
-
-                for (var i = subscriptions.Count - 1; i >= 0; i--)
-                {
-                    var listItem = ((EventSubscription<TPayload>)subscriptions[i]).Action;
-
-                    if (listItem == null)
-                    {
-                        // Prune from main list. Log?
-                        subscriptions.RemoveAt(i);
-                    }
-                }
-            }
-        }
     }
 }

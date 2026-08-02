@@ -15,7 +15,7 @@ internal class BackgroundEventSubscription<TPayload> : EventSubscription<TPayloa
 
         if (action != null)
         {
-            Task.Run(() =>
+            _ = Task.Run(() =>
             {
                 if (filter != null && filter(payload))
                 {

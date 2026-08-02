@@ -135,18 +135,56 @@ public class AsyncPubSubEvent<TPayload> : EventBase
     }
 
     /// <summary>
+    /// Asynchronusly published the event to all subscribers.
+    /// the same way as <see cref="EventBase.Publish"/> does.
+    /// </summary>
+    /// <param name="payload"></param>
+    public async virtual void Publish(TPayload payload)
+    {
+        await PublishImplementation(payload);
+    }
+
+    /// <summary>
+    /// Asynchronusly published the event to all subscribers and returns a task representing the asynchronous operation which completes when the all events handler completes.
+    /// This is new API and should be used instead of <see cref="Publish"/> when publisher needs to know when the operation is complete.
+    /// </summary>
+    /// <returns></returns>
+    public virtual ValueTask Send(TPayload payload)
+    {
+        return PublishImplementation(payload);
+    }
+
+    /// <inheritdoc/>
+    protected override async void InternalPublish(params object[] arguments)
+    {
+        TPayload argument = default;
+        
+        if (arguments != null && arguments.Length > 0 && arguments[0] != null)
+        {
+            argument = (TPayload)arguments[0];
+        }
+
+        await PublishImplementation(argument);
+    }
+
+
+    /// <summary>
     /// Publishes the <see cref="AsyncPubSubEvent{TPayload}"/>.
     /// </summary>
     /// <param name="payload">Message to pass to the subscribers.</param>
-    public virtual async ValueTask Publish(TPayload payload)
+    private async ValueTask PublishImplementation(TPayload payload)
     {
-        var activeSubscribers = AsyncPubSubEvent.PruneSubscribers((List<IEventSubscription>)Subscriptions);
+        var activeSubscribers = LightweightPubSubEvent.PruneSubscribers<AsyncEventSubscription<TPayload>>((List<IEventSubscription>)Subscriptions);
 
         try
         {
-            foreach (AsyncEventSubscription<TPayload> subscriber in activeSubscribers)
+            var subscribtions = activeSubscribers.Subscribtions;
+
+            for (int i = 0; i < activeSubscribers.Count; i++)
             {
-                if(subscriber != null)
+                AsyncEventSubscription<TPayload> subscriber = subscribtions[i] as AsyncEventSubscription<TPayload>;
+
+                if (subscriber != null)
                 {
                     await subscriber.InvokeAction(payload);
                 }
@@ -154,7 +192,10 @@ public class AsyncPubSubEvent<TPayload> : EventBase
         }
         finally
         {
-            ArrayPool<IEventSubscription>.Shared.Return(activeSubscribers);
+            if (activeSubscribers.Count > 0)
+            {
+                ArrayPool<IEventSubscription>.Shared.Return(activeSubscribers.Subscribtions, clearArray: true);
+            }
         }
     }
 

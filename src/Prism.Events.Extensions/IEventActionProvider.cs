@@ -1,16 +1,16 @@
 namespace Prism.Events.Extensions;
 
 /// <summary>
-/// Provides the liveness state of the callback associated with an event subscription.
+/// Provides the liveness state of the delegates required by an event subscription.
 /// </summary>
 internal interface IEventActionProvider
 {
     /// <summary>
-    /// Determines whether the subscription's callback target is still alive.
+    /// Determines whether all delegates required to invoke the subscription are still alive.
     /// </summary>
     /// <returns>
-    /// <see langword="true"/> when the callback can still be obtained; otherwise,
+    /// <see langword="true"/> when the subscription can still be invoked; otherwise,
     /// <see langword="false"/>.
     /// </returns>
-    bool IsActionAlive();
+    bool IsSubscriptionAlive();
 }

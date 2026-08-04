@@ -34,6 +34,18 @@ namespace Prism.Events.Extensions.Tests
             Assert.True(asyncPubSubEvent.BaseSubscriptions.Count == 1, "Subscriptionlist is empty");
         }
 
+        [Fact]
+        public void PruneKeepsLiveParameterlessSubscription()
+        {
+            var asyncPubSubEvent = new TestableAsyncPubSubEvent();
+            Func<ValueTask> action = () => ValueTask.CompletedTask;
+            asyncPubSubEvent.Subscribe(action);
+
+            asyncPubSubEvent.Prune();
+
+            Assert.Single(asyncPubSubEvent.BaseSubscriptions);
+        }
+
         private static void SubscribeExternalActionWithoutReference(TestableAsyncPubSubEvent<string> asyncPubSubEvent)
         {
             asyncPubSubEvent.Subscribe(new AsyncExternalAction().ExecuteAction);
@@ -424,6 +436,7 @@ namespace Prism.Events.Extensions.Tests
 
             PubSubEvent.Publish("testPayload");
             Assert.False(wasCalled);
+            Assert.Empty(PubSubEvent.BaseSubscriptions);
         }
 
         [Fact]

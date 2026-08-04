@@ -404,6 +404,7 @@ namespace Prism.Events.Extensions.Tests
 
             PubSubEvent.Publish("testPayload");
             Assert.False(wasCalled);
+            Assert.Empty(PubSubEvent.BaseSubscriptions);
         }
 
         [Fact]

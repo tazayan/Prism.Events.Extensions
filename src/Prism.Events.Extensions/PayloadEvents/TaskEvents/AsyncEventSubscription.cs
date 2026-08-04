@@ -133,14 +133,14 @@ class AsyncEventSubscription<TPayload> : IEventSubscription, IEventActionProvide
     }
 
     /// <summary>
-    /// Determines whether the subscriber callback is still alive.
+    /// Determines whether the callback and filter required by the subscription are still alive.
     /// </summary>
     /// <returns>
-    /// <see langword="true"/> when <see cref="Action"/> is available; otherwise,
-    /// <see langword="false"/>.
+    /// <see langword="true"/> when both <see cref="Action"/> and <see cref="Filter"/> are available;
+    /// otherwise, <see langword="false"/>.
     /// </returns>
-    public bool IsActionAlive()
+    public bool IsSubscriptionAlive()
     {
-        return Action != null;
+        return Action != null && Filter != null;
     }
 }

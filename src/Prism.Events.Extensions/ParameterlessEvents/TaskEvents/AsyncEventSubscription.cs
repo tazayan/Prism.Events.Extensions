@@ -51,11 +51,28 @@ class AsyncEventSubscription : IEventSubscription, IEventActionProvider
     public SubscriptionToken SubscriptionToken { get; set; }
 
     /// <summary>
-    /// Returns no synchronous execution strategy because this subscription requires asynchronous invocation.
+    /// Gets an object-array execution strategy for <see cref="IEventSubscription"/> compatibility.
     /// </summary>
-    /// <returns>Always <see langword="null"/>.</returns>
+    /// <returns>
+    /// A strategy that starts the asynchronous callback, or <see langword="null"/> when the
+    /// weakly referenced callback is no longer alive.
+    /// </returns>
+    /// <remarks>
+    /// The compatibility strategy cannot await the <see cref="ValueTask"/> returned by the callback.
+    /// Normal <see cref="AsyncPubSubEvent"/> publication invokes <see cref="InvokeAction"/> directly.
+    /// </remarks>
     Action<object[]> IEventSubscription.GetExecutionStrategy()
     {
+        Func<ValueTask> action = Action;
+
+        if (action != null)
+        {
+            return arguments =>
+            {
+                _ = InvokeAction();
+            };
+        }
+
         return null;
     }
 
@@ -79,13 +96,13 @@ class AsyncEventSubscription : IEventSubscription, IEventActionProvider
     }
 
     /// <summary>
-    /// Determines whether the subscriber callback is still alive.
+    /// Determines whether the subscription can still be invoked.
     /// </summary>
     /// <returns>
     /// <see langword="true"/> when <see cref="Action"/> is available; otherwise,
     /// <see langword="false"/>.
     /// </returns>
-    public bool IsActionAlive()
+    public bool IsSubscriptionAlive()
     {
         return Action != null;
     }

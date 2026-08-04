@@ -205,7 +205,7 @@ public class LightweightPubSubEvent : EventBase
     }
 
     /// <summary>
-    /// Removes subscriptions whose callback targets are no longer alive and creates a stable
+    /// Removes subscriptions whose required delegates are no longer alive and creates a stable
     /// snapshot of the remaining subscriptions.
     /// </summary>
     /// <typeparam name="TSubscriptionType">
@@ -226,9 +226,9 @@ public class LightweightPubSubEvent : EventBase
 
                     for (var i = subscriptions.Count - 1; i >= 0; i--)
                     {
-                        var isActionAlive = ((TSubscriptionType)subscriptions[i]).IsActionAlive();
+                        var isSubscriptionAlive = ((TSubscriptionType)subscriptions[i]).IsSubscriptionAlive();
 
-                        if (!isActionAlive)
+                        if (!isSubscriptionAlive)
                         {
                             // Prune from main list
                             subscriptions.RemoveAt(i);

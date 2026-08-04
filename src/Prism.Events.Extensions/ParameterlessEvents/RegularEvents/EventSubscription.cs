@@ -124,13 +124,13 @@ class EventSubscription : IEventSubscription, IEventActionProvider
     }
 
     /// <summary>
-    /// Determines whether the subscriber callback is still alive.
+    /// Determines whether the subscription can still be invoked.
     /// </summary>
     /// <returns>
     /// <see langword="true"/> when <see cref="EventSubscription.Action"/> is available; otherwise,
     /// <see langword="false"/>.
     /// </returns>
-    public bool IsActionAlive()
+    public bool IsSubscriptionAlive()
     {
         return Action != null;
     }

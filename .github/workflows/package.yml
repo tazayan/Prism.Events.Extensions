@@ -1,0 +1,78 @@
+name: Package
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Package version, for example 0.1.0 or 0.1.0-preview.1
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_NOLOGO: true
+
+jobs:
+  package:
+    name: Create release packages
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set package version
+        shell: bash
+        env:
+          REQUESTED_VERSION: ${{ inputs.version }}
+        run: |
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            package_version="${GITHUB_REF_NAME#v}"
+          else
+            package_version="$REQUESTED_VERSION"
+          fi
+
+          if [[ ! "$package_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.-]+)?$ ]]; then
+            echo "Invalid package version: $package_version" >&2
+            exit 1
+          fi
+
+          echo "PACKAGE_VERSION=$package_version" >> "$GITHUB_ENV"
+
+      - name: Set up .NET SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore Prism.Events.Extensions.slnx
+
+      - name: Build
+        run: dotnet build Prism.Events.Extensions.slnx --configuration Release --no-restore
+
+      - name: Test
+        run: >-
+          dotnet test tests/Prism.Events.Extensions/Prism.Events.Extensions.Tests.csproj
+          --configuration Release
+          --no-build
+
+      - name: Create NuGet packages
+        run: >-
+          dotnet pack src/Prism.Events.Extensions/Prism.Events.Extensions.csproj
+          --configuration Release
+          --no-build
+          --no-restore
+          -p:PackageVersion=${{ env.PACKAGE_VERSION }}
+
+      - name: Upload NuGet packages
+        uses: actions/upload-artifact@v7
+        with:
+          name: nuget-packages-${{ env.PACKAGE_VERSION }}
+          path: artifacts/packages/*.*nupkg
+          if-no-files-found: error

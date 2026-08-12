@@ -1,13 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
-    <Description>Prism.Events.Extensions is a library that facilitates communication between loosely coupled components in an application. It provides an event aggregator service that allows publishers and subscribers to interact through events without direct references. With multicast publish/subscribe functionality, multiple publishers can raise the same event, and multiple subscribers can listen to it, enabling flexible and efficient communication.</Description>
-    <PackageTags>prism;wpf;xamarin;dotnet maui;maui;uno;unoplatform;events;event aggregator;ieventaggregator;pubsubevent</PackageTags>
+    <Description>High-performance synchronous and ValueTask-based asynchronous event types for Prism.Events.</Description>
+    <PackageTags>prism;events;event aggregator;pubsubevent;async;performance</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Prism.Core" />
     <PackageReference Include="Prism.Events" />
     <Compile Update="Properties\Resources.Designer.cs" DesignTime="True" AutoGen="True" DependentUpon="Resources.resx" />
     <EmbeddedResource Update="Properties\Resources.resx" Generator="ResXFileCodeGenerator" LastGenOutput="Resources.Designer.cs" />

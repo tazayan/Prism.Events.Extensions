@@ -64,13 +64,13 @@ internal class TaskEventSubscription<TPayload> : AsyncEventSubscription<TPayload
         {
             if (filter != null)
             {
-                await Task.Factory.StartNew(() =>
+                await Task.Factory.StartNew(async () =>
                 {
                     if (filter(payload))
                     {
-                        action.Invoke(payload);
+                        await action.Invoke(payload);
                     }
-                }, CancellationToken.None, TaskCreationOptions.None, scheduler);
+                }, CancellationToken.None, TaskCreationOptions.None, scheduler).Unwrap();
             }
         }
     }

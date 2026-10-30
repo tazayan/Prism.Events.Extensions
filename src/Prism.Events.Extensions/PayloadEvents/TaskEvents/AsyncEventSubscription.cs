@@ -31,12 +31,12 @@ class AsyncEventSubscription<TPayload> : IEventSubscription, IEventActionProvide
         if (actionReference == null)
             throw new ArgumentNullException(nameof(actionReference));
         if (!(actionReference.Target is Func<TPayload, ValueTask>))
-            throw new ArgumentException(string.Format(CultureInfo.CurrentCulture, Resources.InvalidDelegateRerefenceTypeException, typeof(Action).FullName), nameof(actionReference));
+            throw new ArgumentException(string.Format(CultureInfo.CurrentCulture, Resources.InvalidDelegateReferenceTypeException, typeof(Func<TPayload, ValueTask>).FullName), nameof(actionReference));
 
         if (filterReference == null)
             throw new ArgumentNullException(nameof(filterReference));
         if (!(filterReference.Target is Predicate<TPayload>))
-            throw new ArgumentException(string.Format(CultureInfo.CurrentCulture, Resources.InvalidDelegateRerefenceTypeException, typeof(Predicate<TPayload>).FullName), nameof(filterReference));
+            throw new ArgumentException(string.Format(CultureInfo.CurrentCulture, Resources.InvalidDelegateReferenceTypeException, typeof(Predicate<TPayload>).FullName), nameof(filterReference));
 
         this.actionReference = actionReference;
         this.filterReference = filterReference;

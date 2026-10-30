@@ -129,7 +129,7 @@ public class LightweightPubSubEventExtensionFixture
         var snapshot = LightweightPubSubEvent.PruneSubscribers<EventSubscription>(subscriptions);
 
         Assert.Equal(0, snapshot.Count);
-        Assert.Empty(snapshot.Subscribtions);
+        Assert.Empty(snapshot.Subscriptions);
     }
 
     [Fact]

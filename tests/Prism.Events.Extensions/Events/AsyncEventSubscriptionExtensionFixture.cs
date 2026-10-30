@@ -4,6 +4,8 @@ namespace Prism.Events.Extensions.Tests;
 
 public class AsyncEventSubscriptionExtensionFixture
 {
+    private static readonly TimeSpan TestTimeout = TimeSpan.FromSeconds(10);
+
     [Fact]
     public void ParameterlessSubscriptionRejectsInvalidActionReferences()
     {
@@ -101,53 +103,87 @@ public class AsyncEventSubscriptionExtensionFixture
     }
 
     [Fact]
-    public async Task DefaultSchedulerInvokesParameterlessActionWithoutAwaitingItsReturnedValueTask()
+    public async Task DefaultSchedulerCompletesOnlyAfterParameterlessCallbackValueTaskCompletes()
     {
         var callbackRelease = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-        var invoked = false;
+        var started = new TaskCompletionSource<int>(TaskCreationOptions.RunContinuationsAsynchronously);
         var actionReference = new MockDelegateReference((Func<ValueTask>)(() =>
         {
-            invoked = true;
+            started.TrySetResult(Environment.CurrentManagedThreadId);
             return new ValueTask(callbackRelease.Task);
         }));
         var subscription = TaskEventSubscription.CreateDefault(actionReference);
 
-        await subscription.InvokeAction();
+        var invocation = subscription.InvokeAction().AsTask();
 
-        Assert.True(invoked);
-        Assert.False(callbackRelease.Task.IsCompleted);
+        await started.Task.WaitAsync(TestTimeout);
+        Assert.False(invocation.IsCompleted);
         callbackRelease.SetResult(true);
+        await invocation.WaitAsync(TestTimeout);
 
         actionReference.Target = null;
-        await subscription.InvokeAction();
+        Assert.True(subscription.InvokeAction().IsCompletedSuccessfully);
     }
 
     [Fact]
-    public async Task DefaultSchedulerAppliesPayloadFilterWithoutAwaitingReturnedValueTask()
+    public async Task DefaultSchedulerAppliesPayloadFilterAndAwaitsCallbackValueTask()
     {
         var callbackRelease = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         var payloads = new List<int>();
         var actionReference = new MockDelegateReference((Func<int, ValueTask>)(payload =>
         {
-            payloads.Add(payload);
+            lock (payloads) payloads.Add(payload);
             return new ValueTask(callbackRelease.Task);
         }));
         var filterReference = new MockDelegateReference((Predicate<int>)(payload => payload > 0));
         var subscription = TaskEventSubscription<int>.CreateDefault(actionReference, filterReference);
 
-        await subscription.InvokeAction(7);
-        await subscription.InvokeAction(-1);
+        await subscription.InvokeAction(-1).AsTask().WaitAsync(TestTimeout);
+        var accepted = subscription.InvokeAction(7).AsTask();
+        await Task.Delay(50);
 
         Assert.Equal(new[] { 7 }, payloads);
-        Assert.False(callbackRelease.Task.IsCompleted);
+        Assert.False(accepted.IsCompleted);
         callbackRelease.SetResult(true);
+        await accepted.WaitAsync(TestTimeout);
 
         filterReference.Target = null;
-        await subscription.InvokeAction(8);
+        Assert.True(subscription.InvokeAction(8).IsCompletedSuccessfully);
         actionReference.Target = null;
         filterReference.Target = (Predicate<int>)(_ => true);
-        await subscription.InvokeAction(9);
+        Assert.True(subscription.InvokeAction(9).IsCompletedSuccessfully);
         Assert.Equal(new[] { 7 }, payloads);
+    }
+
+    [Fact]
+    public async Task DefaultSchedulerFaultsWhenCallbackOrFilterThrows()
+    {
+        var parameterless = TaskEventSubscription.CreateDefault(
+            new MockDelegateReference((Func<ValueTask>)(() => throw new InvalidOperationException("sync"))));
+        var asyncFault = TaskEventSubscription.CreateDefault(
+            new MockDelegateReference((Func<ValueTask>)(async () =>
+            {
+                await Task.Yield();
+                throw new InvalidOperationException("async");
+            })));
+        var filterFault = TaskEventSubscription<int>.CreateDefault(
+            new MockDelegateReference((Func<int, ValueTask>)(_ => ValueTask.CompletedTask)),
+            new MockDelegateReference((Predicate<int>)(_ => throw new InvalidOperationException("filter"))));
+
+        Assert.Equal("sync", (await Assert.ThrowsAsync<InvalidOperationException>(() => parameterless.InvokeAction().AsTask())).Message);
+        Assert.Equal("async", (await Assert.ThrowsAsync<InvalidOperationException>(() => asyncFault.InvokeAction().AsTask())).Message);
+        Assert.Equal("filter", (await Assert.ThrowsAsync<InvalidOperationException>(() => filterFault.InvokeAction(1).AsTask())).Message);
+    }
+
+    [Fact]
+    public void SynchronizationContextFactoriesRejectNullContext()
+    {
+        Assert.Throws<ArgumentNullException>(() => TaskEventSubscription.CreateForSynchronizationContext(
+            new MockDelegateReference((Func<ValueTask>)(() => ValueTask.CompletedTask)), null));
+        Assert.Throws<ArgumentNullException>(() => TaskEventSubscription<int>.CreateForSynchronizationContext(
+            new MockDelegateReference((Func<int, ValueTask>)(_ => ValueTask.CompletedTask)),
+            new MockDelegateReference((Predicate<int>)(_ => true)),
+            null));
     }
 
     [Fact]

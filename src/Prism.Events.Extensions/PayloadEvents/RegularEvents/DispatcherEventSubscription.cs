@@ -36,11 +36,11 @@ internal class DispatcherEventSubscription<TPayload> : EventSubscription<TPayloa
         var action = Action;
         var filter = Filter;
 
-        if (action != null)
+        if (action != null && filter != null)
         {
             synchronizationContext.Post((o) =>
             {
-                if (filter != null && filter(payload))
+                if (filter(payload))
                 {
                     action(payload);
                 }

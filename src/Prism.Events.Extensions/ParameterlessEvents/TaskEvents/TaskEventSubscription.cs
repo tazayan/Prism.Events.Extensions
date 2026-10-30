@@ -55,7 +55,7 @@ internal class TaskEventSubscription : AsyncEventSubscription
 
         if (action != null)
         {
-            await Task.Factory.StartNew(() => action.Invoke(), default, TaskCreationOptions.None, scheduler);
+            await Task.Factory.StartNew(async () => await action.Invoke(), default, TaskCreationOptions.None, scheduler).Unwrap();
         }
     }
 }

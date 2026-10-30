@@ -153,7 +153,7 @@ public class AsyncPubSubEvent : EventBase
 
         try
         {
-            var subscribtions = activeSubscribers.Subscribtions;
+            var subscribtions = activeSubscribers.Subscriptions;
 
             for (int i = 0; i < activeSubscribers.Count; i++)
             {
@@ -169,7 +169,7 @@ public class AsyncPubSubEvent : EventBase
         {
             if (activeSubscribers.Count > 0)
             {
-                ArrayPool<IEventSubscription>.Shared.Return(activeSubscribers.Subscribtions, clearArray: true);
+                ArrayPool<IEventSubscription>.Shared.Return(activeSubscribers.Subscriptions, clearArray: true);
             }
         }
     }

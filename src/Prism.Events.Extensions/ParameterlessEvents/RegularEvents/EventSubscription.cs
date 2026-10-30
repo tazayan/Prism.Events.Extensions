@@ -39,7 +39,7 @@ class EventSubscription : IEventSubscription, IEventActionProvider
         if (actionReference == null)
             throw new ArgumentNullException(nameof(actionReference));
         if (!(actionReference.Target is Action))
-            throw new ArgumentException(string.Format(CultureInfo.CurrentCulture, Resources.InvalidDelegateRerefenceTypeException, typeof(Action).FullName), nameof(actionReference));
+            throw new ArgumentException(string.Format(CultureInfo.CurrentCulture, Resources.InvalidDelegateReferenceTypeException, typeof(Action).FullName), nameof(actionReference));
 
         this.actionReference = actionReference;
     }

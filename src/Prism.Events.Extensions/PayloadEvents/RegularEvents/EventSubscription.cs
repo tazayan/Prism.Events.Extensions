@@ -33,12 +33,12 @@ class EventSubscription<TPayload> : IEventSubscription, IEventActionProvider
         if (actionReference == null)
             throw new ArgumentNullException(nameof(actionReference));
         if (!(actionReference.Target is Action<TPayload>))
-            throw new ArgumentException(string.Format(CultureInfo.CurrentCulture, Resources.InvalidDelegateRerefenceTypeException, typeof(Action).FullName), nameof(actionReference));
+            throw new ArgumentException(string.Format(CultureInfo.CurrentCulture, Resources.InvalidDelegateReferenceTypeException, typeof(Action<TPayload>).FullName), nameof(actionReference));
 
         if (filterReference == null)
             throw new ArgumentNullException(nameof(filterReference));
         if (!(filterReference.Target is Predicate<TPayload>))
-            throw new ArgumentException(string.Format(CultureInfo.CurrentCulture, Resources.InvalidDelegateRerefenceTypeException, typeof(Predicate<TPayload>).FullName), nameof(filterReference));
+            throw new ArgumentException(string.Format(CultureInfo.CurrentCulture, Resources.InvalidDelegateReferenceTypeException, typeof(Predicate<TPayload>).FullName), nameof(filterReference));
 
         this.actionReference = actionReference;
         this.filterReference = filterReference;

@@ -135,7 +135,7 @@ public class AsyncPubSubEventExtensionFixture
     }
 
     [Fact]
-    public async Task SchedulerBackedSendWaitsForInvocationButNotCallbackValueTask()
+    public async Task SchedulerBackedSendAwaitsCallbackValueTask()
     {
         var parameterlessEvent = new AsyncPubSubEvent();
         var payloadEvent = new AsyncPubSubEvent<int>();
@@ -153,13 +153,39 @@ public class AsyncPubSubEventExtensionFixture
             return new ValueTask(callbackRelease.Task);
         }, ThreadOption.BackgroundThread, true, payload => payload == 11);
 
-        await parameterlessEvent.Send();
-        await payloadEvent.Send(11);
+        var parameterlessSend = parameterlessEvent.Send().AsTask();
+        var payloadSend = payloadEvent.Send(11).AsTask();
 
         Assert.True(await parameterlessStarted.Task.WaitAsync(TimeSpan.FromSeconds(5)));
         Assert.Equal(11, await payloadStarted.Task.WaitAsync(TimeSpan.FromSeconds(5)));
-        Assert.False(callbackRelease.Task.IsCompleted);
+        Assert.False(parameterlessSend.IsCompleted);
+        Assert.False(payloadSend.IsCompleted);
+
         callbackRelease.SetResult(true);
+        await Task.WhenAll(parameterlessSend, payloadSend).WaitAsync(TimeSpan.FromSeconds(5));
+    }
+
+    [Fact]
+    public async Task SchedulerBackedSendPropagatesCallbackExceptions()
+    {
+        var parameterlessEvent = new AsyncPubSubEvent();
+        var payloadEvent = new AsyncPubSubEvent<int>();
+        parameterlessEvent.Subscribe(async () =>
+        {
+            await Task.Yield();
+            throw new InvalidOperationException("background parameterless");
+        }, ThreadOption.BackgroundThread, true);
+        payloadEvent.Subscribe(async _ =>
+        {
+            await Task.Yield();
+            throw new InvalidOperationException("background payload");
+        }, ThreadOption.BackgroundThread, true);
+
+        var parameterlessException = await Assert.ThrowsAsync<InvalidOperationException>(() => parameterlessEvent.Send().AsTask());
+        var payloadException = await Assert.ThrowsAsync<InvalidOperationException>(() => payloadEvent.Send(1).AsTask());
+
+        Assert.Equal("background parameterless", parameterlessException.Message);
+        Assert.Equal("background payload", payloadException.Message);
     }
 
     [Fact]

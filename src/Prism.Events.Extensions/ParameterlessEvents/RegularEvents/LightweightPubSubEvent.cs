@@ -131,7 +131,7 @@ public class LightweightPubSubEvent : EventBase
 
         try
         {
-            var subscribtions = activeSubscribers.Subscribtions;
+            var subscribtions = activeSubscribers.Subscriptions;
 
             for (int i = 0; i < activeSubscribers.Count; i++)
             {
@@ -147,7 +147,7 @@ public class LightweightPubSubEvent : EventBase
         {
             if (activeSubscribers.Count > 0)
             {
-                ArrayPool<IEventSubscription>.Shared.Return(activeSubscribers.Subscribtions, clearArray: true);
+                ArrayPool<IEventSubscription>.Shared.Return(activeSubscribers.Subscriptions, clearArray: true);
             }
         }
     }
@@ -215,7 +215,7 @@ public class LightweightPubSubEvent : EventBase
     /// <returns>
     /// A pooled array containing the subscription snapshot and the number of valid entries in that array.
     /// </returns>
-    internal static (IEventSubscription[] Subscribtions, int Count) PruneSubscribers<TSubscriptionType>(List<IEventSubscription> subscriptions) where TSubscriptionType : IEventActionProvider
+    internal static (IEventSubscription[] Subscriptions, int Count) PruneSubscribers<TSubscriptionType>(List<IEventSubscription> subscriptions) where TSubscriptionType : IEventActionProvider
     {
         if (subscriptions.Count > 0)
         {

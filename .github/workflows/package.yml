@@ -1,5 +1,5 @@
-name: Build NuGet Package
-run-name: Create NuGet package ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}
+name: Publish NuGet Package
+run-name: Publish NuGet package ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}
 
 on:
   push:
@@ -21,9 +21,12 @@ env:
 
 jobs:
   build-test-package:
-    name: Build, test, and create package
+    name: Build, test, and publish package
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
 
     steps:
       - name: Check out repository
@@ -155,3 +158,18 @@ jobs:
           if-no-files-found: error
           retention-days: 30
           compression-level: 0
+
+      - name: Authenticate to NuGet.org
+        id: nuget
+        uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1
+        with:
+          user: ${{ secrets.NUGET_PUBLISH_MAIN }}
+
+      - name: Publish to NuGet.org
+        env:
+          NUGET_API_KEY: ${{ steps.nuget.outputs.NUGET_API_KEY }}
+          PACKAGE_PATH: ${{ steps.package.outputs.path }}
+        run: >-
+          dotnet nuget push "$PACKAGE_PATH"
+          --api-key "$NUGET_API_KEY"
+          --source https://api.nuget.org/v3/index.json

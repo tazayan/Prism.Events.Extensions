@@ -24,7 +24,8 @@
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
 
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <!-- NuGet blocks inline HTML; keep its short README separate from the GitHub layout. -->
+    <PackageReadmeFile>README.NuGet.md</PackageReadmeFile>
     <PackageIcon>logo.png</PackageIcon>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <VersionPrefix>1.0.0</VersionPrefix>
@@ -38,7 +39,9 @@
 
   <ItemGroup Condition="'$(IsPackable)' == 'true'">
     <None Include="$(MSBuildThisFileDirectory)LICENSE" Pack="true" PackagePath="\" />
-    <None Include="$(MSBuildThisFileDirectory)README.md" Pack="true" PackagePath="\" />
+    <None Include="$([System.IO.Path]::Combine('$(MSBuildThisFileDirectory)', 'README.NuGet.md'))"
+          Pack="true"
+          PackagePath="\" />
     <None Include="$([System.IO.Path]::Combine('$(MSBuildThisFileDirectory)', 'assets', 'logo.png'))"
           Pack="true"
           PackagePath="\" />

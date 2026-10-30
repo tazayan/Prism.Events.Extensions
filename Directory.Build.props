@@ -1,8 +1,7 @@
 <Project>
   <PropertyGroup>
     <!-- The .NET SDK version is pinned in global.json; supported target frameworks live here. -->
-    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
-
+    <TargetFrameworks>net10.0;net9.0;net8.0</TargetFrameworks>
     <LangVersion>latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>
     <NeutralLanguage>en</NeutralLanguage>

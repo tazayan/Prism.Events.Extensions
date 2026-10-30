@@ -36,7 +36,7 @@ public class LightweightPubSubEventExtensionFixture
     public void ParameterlessCompatibilityStrategyInvokesLiveActionAndReturnsNullForDeadAction()
     {
         var invocationCount = 0;
-        var actionReference = new MockDelegateReference((Action)(() => invocationCount++));
+        var actionReference = new MockDelegateReference((Action)(() => invocationCount++), preventTargetSet: false);
         var subscription = new EventSubscription(actionReference);
         var strategy = ((IEventSubscription)subscription).GetExecutionStrategy();
 

@@ -16,7 +16,7 @@ internal class DispatcherEventSubscription : EventSubscription
     /// <param name="synchronizationContext">
     /// The synchronization context through which the callback is dispatched.
     /// </param>
-    public DispatcherEventSubscription(IDelegateReference actionReference, SynchronizationContext synchronizationContext)
+    public DispatcherEventSubscription(DelegateReference actionReference, SynchronizationContext synchronizationContext)
         : base(actionReference)
     {
         this.synchronizationContext = synchronizationContext;

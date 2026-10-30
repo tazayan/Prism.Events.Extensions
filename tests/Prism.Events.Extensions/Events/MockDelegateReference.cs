@@ -1,16 +1,28 @@
 namespace Prism.Events.Extensions.Tests;
 
-class MockDelegateReference : IDelegateReference
+class MockDelegateReference : DelegateReference
 {
-    public Delegate Target { get; set; }
-
-    public MockDelegateReference()
+    public MockDelegateReference(Delegate target) : base(target, true)
     {
-
     }
 
-    public MockDelegateReference(Delegate target)
+    public MockDelegateReference(Delegate target, bool preventTargetSet) : base(target, preventTargetSet)
     {
-        Target = target;
+    }
+
+    public new Delegate Target
+    {
+        get => base.Target;
+        set => SetTarget(value);
+    }
+
+    private void SetTarget(Delegate target)
+    {
+        WeakReference _weakReference = typeof(DelegateReference).GetField("_weakReference", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.GetValue(this) as WeakReference;
+
+        if (_weakReference != null) 
+        {
+            _weakReference.Target = target?.Target;
+        }
     }
 }

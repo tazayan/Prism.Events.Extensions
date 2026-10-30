@@ -17,7 +17,7 @@ internal class DispatcherEventSubscription<TPayload> : EventSubscription<TPayloa
     /// <param name="synchronizationContext">
     /// The synchronization context through which the callback is dispatched.
     /// </param>
-    public DispatcherEventSubscription(IDelegateReference actionReference, IDelegateReference filterReference, SynchronizationContext synchronizationContext)
+    public DispatcherEventSubscription(DelegateReference actionReference, DelegateReference filterReference, SynchronizationContext synchronizationContext)
         : base(actionReference, filterReference)
     {
         this.synchronizationContext = synchronizationContext;

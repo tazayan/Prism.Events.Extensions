@@ -81,7 +81,7 @@ public class AsyncPubSubEvent : EventBase
     /// </remarks>
     public virtual SubscriptionToken Subscribe(Func<ValueTask> action, ThreadOption threadOption, bool keepSubscriberReferenceAlive)
     {
-        IDelegateReference actionReference = new DelegateReference(action, keepSubscriberReferenceAlive);
+        DelegateReference actionReference = new DelegateReference(action, keepSubscriberReferenceAlive);
 
         AsyncEventSubscription subscription;
         switch (threadOption)

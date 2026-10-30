@@ -16,8 +16,8 @@ namespace Prism.Events.Extensions.Tests
                 completeEvent.Set();
             };
 
-            IDelegateReference actionDelegateReference = new MockDelegateReference() { Target = action };
-            IDelegateReference filterDelegateReference = new MockDelegateReference() { Target = (Predicate<object>)delegate { return true; } };
+            MockDelegateReference actionDelegateReference = new MockDelegateReference(action);
+            MockDelegateReference filterDelegateReference = new MockDelegateReference((Predicate<object>)delegate { return true; } );
 
             var eventSubscription = new BackgroundEventSubscription<object>(actionDelegateReference, filterDelegateReference);
 
@@ -49,7 +49,7 @@ namespace Prism.Events.Extensions.Tests
                 completeEvent.Set();
             };
 
-            IDelegateReference actionDelegateReference = new MockDelegateReference() { Target = action };
+            MockDelegateReference actionDelegateReference = new MockDelegateReference(action);
 
             var eventSubscription = new BackgroundEventSubscription(actionDelegateReference);
 

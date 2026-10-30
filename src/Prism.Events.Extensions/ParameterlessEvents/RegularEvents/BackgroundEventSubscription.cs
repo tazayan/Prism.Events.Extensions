@@ -13,7 +13,7 @@ internal class BackgroundEventSubscription : EventSubscription
     /// A reference to the subscriber <see cref="System.Action"/> delegate.
     /// Passed directly to the <see cref="EventSubscription"/> base constructor.
     /// </param>
-    public BackgroundEventSubscription(IDelegateReference actionReference) : base(actionReference)
+    public BackgroundEventSubscription(DelegateReference actionReference) : base(actionReference)
     {
     }
 

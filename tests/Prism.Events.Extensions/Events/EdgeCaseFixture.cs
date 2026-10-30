@@ -17,9 +17,9 @@ public class EdgeCaseFixture
     {
         var invocationCount = 0;
         var context = new RecordingSynchronizationContext();
-        var publisherReference = new MockDelegateReference((Action)(() => invocationCount++));
-        var backgroundReference = new MockDelegateReference((Action)(() => invocationCount++));
-        var dispatcherReference = new MockDelegateReference((Action)(() => invocationCount++));
+        var publisherReference = new MockDelegateReference((Action)(() => invocationCount++), preventTargetSet: false);
+        var backgroundReference = new MockDelegateReference((Action)(() => invocationCount++), preventTargetSet: false);
+        var dispatcherReference = new MockDelegateReference((Action)(() => invocationCount++), preventTargetSet: false);
         var publisher = new EventSubscription(publisherReference);
         var background = new BackgroundEventSubscription(backgroundReference);
         var dispatcher = new DispatcherEventSubscription(dispatcherReference, context);
@@ -42,8 +42,8 @@ public class EdgeCaseFixture
         var invocationCount = 0;
         var context = new RecordingSynchronizationContext();
         Action<int> action = _ => invocationCount++;
-        var backgroundFilter = new MockDelegateReference((Predicate<int>)(_ => true));
-        var dispatcherFilter = new MockDelegateReference((Predicate<int>)(_ => true));
+        var backgroundFilter = new MockDelegateReference((Predicate<int>)(_ => true), preventTargetSet: false);
+        var dispatcherFilter = new MockDelegateReference((Predicate<int>)(_ => true), preventTargetSet: false);
         var background = new BackgroundEventSubscription<int>(new MockDelegateReference(action), backgroundFilter);
         var dispatcher = new DispatcherEventSubscription<int>(new MockDelegateReference(action), dispatcherFilter, context);
         backgroundFilter.Target = null;
@@ -61,9 +61,9 @@ public class EdgeCaseFixture
     {
         var invocationCount = 0;
         var context = new RecordingSynchronizationContext();
-        var publisherAction = new MockDelegateReference((Action<int>)(_ => invocationCount++));
-        var backgroundAction = new MockDelegateReference((Action<int>)(_ => invocationCount++));
-        var dispatcherAction = new MockDelegateReference((Action<int>)(_ => invocationCount++));
+        var publisherAction = new MockDelegateReference((Action<int>)(_ => invocationCount++), preventTargetSet: false);
+        var backgroundAction = new MockDelegateReference((Action<int>)(_ => invocationCount++), preventTargetSet: false);
+        var dispatcherAction = new MockDelegateReference((Action<int>)(_ => invocationCount++), preventTargetSet: false);
         var filter = new MockDelegateReference((Predicate<int>)(_ => true));
         var publisher = new EventSubscription<int>(publisherAction, filter);
         var background = new BackgroundEventSubscription<int>(backgroundAction, filter);
@@ -250,7 +250,7 @@ public class EdgeCaseFixture
     public void SnapshotCopiesEverySubscriptionInOrderWithoutCheckingLiveness()
     {
         var first = new EventSubscription(new MockDelegateReference((Action)(() => { })));
-        var dead = new MockDelegateReference((Action)(() => { }));
+        var dead = new MockDelegateReference((Action)(() => { }), preventTargetSet: false);
         var deadSubscription = new EventSubscription(dead);
         var second = new EventSubscription(new MockDelegateReference((Action)(() => { })));
         var subscriptions = new List<IEventSubscription> { first, deadSubscription, second };

@@ -84,7 +84,7 @@ public class LightweightPubSubEvent : EventBase
     /// </remarks>
     public virtual SubscriptionToken Subscribe(Action action, ThreadOption threadOption, bool keepSubscriberReferenceAlive)
     {
-        IDelegateReference actionReference = new DelegateReference(action, keepSubscriberReferenceAlive);
+        DelegateReference actionReference = new DelegateReference(action, keepSubscriberReferenceAlive);
 
         EventSubscription subscription;
         switch (threadOption)

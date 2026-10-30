@@ -8,7 +8,7 @@ namespace Prism.Events.Extensions;
 /// </summary>
 class AsyncEventSubscription : IEventSubscription, IEventActionProvider
 {
-    private readonly IDelegateReference actionReference;
+    private readonly DelegateReference actionReference;
 
     /// <summary>
     /// Initializes a new instance of <see cref="AsyncEventSubscription"/>.
@@ -21,7 +21,7 @@ class AsyncEventSubscription : IEventSubscription, IEventActionProvider
     /// <paramref name="actionReference"/> does not contain a <see cref="Func{TResult}"/> returning a
     /// <see cref="ValueTask"/>.
     /// </exception>
-    public AsyncEventSubscription(IDelegateReference actionReference)
+    public AsyncEventSubscription(DelegateReference actionReference)
     {
         if (actionReference == null)
             throw new ArgumentNullException(nameof(actionReference));
@@ -33,7 +33,7 @@ class AsyncEventSubscription : IEventSubscription, IEventActionProvider
 
 
     /// <summary>
-    /// Gets the asynchronous callback referenced by the <see cref="IDelegateReference"/>.
+    /// Gets the asynchronous callback referenced by the <see cref="DelegateReference"/>.
     /// </summary>
     /// <value>
     /// A parameterless <see cref="Func{TResult}"/> returning a <see cref="ValueTask"/>, or
@@ -104,6 +104,6 @@ class AsyncEventSubscription : IEventSubscription, IEventActionProvider
     /// </returns>
     public bool IsSubscriptionAlive()
     {
-        return Action != null;
+        return !actionReference.TargetEquals(null);
     }
 }

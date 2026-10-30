@@ -126,9 +126,9 @@ public class LightweightPubSubEvent<TPayload> : EventBase
     /// </remarks>
     public virtual SubscriptionToken Subscribe(Action<TPayload> action, ThreadOption threadOption, bool keepSubscriberReferenceAlive, Predicate<TPayload> filter)
     {
-        IDelegateReference actionReference = new DelegateReference(action, keepSubscriberReferenceAlive);
+        DelegateReference actionReference = new DelegateReference(action, keepSubscriberReferenceAlive);
 
-        IDelegateReference filterReference;
+        DelegateReference filterReference;
         if (filter != null)
         {
             filterReference = new DelegateReference(filter, keepSubscriberReferenceAlive);
@@ -141,6 +141,9 @@ public class LightweightPubSubEvent<TPayload> : EventBase
         EventSubscription<TPayload> subscription;
         switch (threadOption)
         {
+            case ThreadOption.PublisherThread:
+                subscription = new EventSubscription<TPayload>(actionReference, filterReference);
+                break;
             case ThreadOption.BackgroundThread:
                 subscription = new BackgroundEventSubscription<TPayload>(actionReference, filterReference);
                 break;

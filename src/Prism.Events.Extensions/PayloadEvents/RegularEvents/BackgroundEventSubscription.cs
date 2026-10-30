@@ -12,7 +12,7 @@ internal class BackgroundEventSubscription<TPayload> : EventSubscription<TPayloa
     /// </summary>
     /// <param name="actionReference">A reference to the subscriber callback.</param>
     /// <param name="filterReference">A reference to the subscription filter.</param>
-    public BackgroundEventSubscription(IDelegateReference actionReference, IDelegateReference filterReference) :
+    public BackgroundEventSubscription(DelegateReference actionReference, DelegateReference filterReference) :
         base(actionReference, filterReference)
     {
 
@@ -31,11 +31,11 @@ internal class BackgroundEventSubscription<TPayload> : EventSubscription<TPayloa
         var action = Action;
         var filter = Filter;
 
-        if (action != null)
+        if (action != null &&filter != null)
         {
             _ = Task.Run(() =>
             {
-                if (filter != null && filter(payload))
+                if (filter(payload))
                 {
                     action(payload);
                 }

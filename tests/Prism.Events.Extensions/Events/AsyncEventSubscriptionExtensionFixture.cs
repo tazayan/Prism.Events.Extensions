@@ -33,7 +33,7 @@ public class AsyncEventSubscriptionExtensionFixture
         {
             invocationCount++;
             return ValueTask.CompletedTask;
-        }));
+        }), preventTargetSet: false);
         var subscription = new AsyncEventSubscription(actionReference);
 
         var strategy = ((IEventSubscription)subscription).GetExecutionStrategy();
@@ -81,8 +81,8 @@ public class AsyncEventSubscriptionExtensionFixture
         {
             invocationCount++;
             return ValueTask.CompletedTask;
-        }));
-        var filterReference = new MockDelegateReference((Predicate<int>)(_ => true));
+        }), preventTargetSet: false);
+        var filterReference = new MockDelegateReference((Predicate<int>)(_ => true), preventTargetSet: false);
         var subscription = new AsyncEventSubscription<int>(actionReference, filterReference);
 
         Assert.True(subscription.IsSubscriptionAlive());
@@ -111,7 +111,7 @@ public class AsyncEventSubscriptionExtensionFixture
         {
             started.TrySetResult(Environment.CurrentManagedThreadId);
             return new ValueTask(callbackRelease.Task);
-        }));
+        }), preventTargetSet: false);
         var subscription = TaskEventSubscription.CreateDefault(actionReference);
 
         var invocation = subscription.InvokeAction().AsTask();
@@ -134,8 +134,8 @@ public class AsyncEventSubscriptionExtensionFixture
         {
             lock (payloads) payloads.Add(payload);
             return new ValueTask(callbackRelease.Task);
-        }));
-        var filterReference = new MockDelegateReference((Predicate<int>)(payload => payload > 0));
+        }), preventTargetSet: false);
+        var filterReference = new MockDelegateReference((Predicate<int>)(payload => payload > 0), preventTargetSet: false);
         var subscription = TaskEventSubscription<int>.CreateDefault(actionReference, filterReference);
 
         await subscription.InvokeAction(-1).AsTask().WaitAsync(TestTimeout);

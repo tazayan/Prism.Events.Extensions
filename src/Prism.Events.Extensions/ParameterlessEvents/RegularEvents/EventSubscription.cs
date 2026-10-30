@@ -21,20 +21,20 @@ namespace Prism.Events.Extensions;
 /// </remarks>
 class EventSubscription : IEventSubscription, IEventActionProvider
 {
-    private readonly IDelegateReference actionReference;
+    private readonly DelegateReference actionReference;
 
     /// <summary>
     /// Initializes a new instance of <see cref="EventSubscription"/> with the specified delegate reference.
     /// </summary>
     /// <param name="actionReference">
     /// A reference to the subscriber <see cref="System.Action"/> delegate. Must not be <see langword="null"/>
-    /// and its <see cref="IDelegateReference.Target"/> must be of type <see cref="System.Action"/>.
+    /// and its <see cref="DelegateReference.Target"/> must be of type <see cref="System.Action"/>.
     /// </param>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="actionReference"/> is <see langword="null"/>.</exception>
     /// <exception cref="ArgumentException">
     /// Thrown when <paramref name="actionReference"/> does not reference an <see cref="System.Action"/> delegate.
     /// </exception>
-    public EventSubscription(IDelegateReference actionReference)
+    public EventSubscription(DelegateReference actionReference)
     {
         if (actionReference == null)
             throw new ArgumentNullException(nameof(actionReference));
@@ -132,6 +132,6 @@ class EventSubscription : IEventSubscription, IEventActionProvider
     /// </returns>
     public bool IsSubscriptionAlive()
     {
-        return Action != null;
+        return !actionReference.TargetEquals(null);
     }
 }

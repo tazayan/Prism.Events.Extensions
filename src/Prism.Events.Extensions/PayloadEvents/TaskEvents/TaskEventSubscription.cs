@@ -15,7 +15,7 @@ internal class TaskEventSubscription<TPayload> : AsyncEventSubscription<TPayload
     /// <param name="actionReference">A reference to the asynchronous callback.</param>
     /// <param name="filterReference">A reference to the subscription filter.</param>
     /// <returns>A subscription configured for thread-pool scheduling.</returns>
-    public static TaskEventSubscription<TPayload> CreateDefault(IDelegateReference actionReference, IDelegateReference filterReference)
+    public static TaskEventSubscription<TPayload> CreateDefault(DelegateReference actionReference, DelegateReference filterReference)
     {
         return new TaskEventSubscription<TPayload>(actionReference, filterReference, TaskScheduler.Default);
     }
@@ -27,7 +27,7 @@ internal class TaskEventSubscription<TPayload> : AsyncEventSubscription<TPayload
     /// <param name="filterReference">A reference to the subscription filter.</param>
     /// <param name="synchronizationContext">The synchronization context used for scheduling.</param>
     /// <returns>A subscription configured for synchronization-context scheduling.</returns>
-    public static TaskEventSubscription<TPayload> CreateForSynchronizationContext(IDelegateReference actionReference, IDelegateReference filterReference, SynchronizationContext synchronizationContext)
+    public static TaskEventSubscription<TPayload> CreateForSynchronizationContext(DelegateReference actionReference, DelegateReference filterReference, SynchronizationContext synchronizationContext)
     {
         return new TaskEventSubscription<TPayload>(actionReference, filterReference,TaskSchedulerHelper.FromSynchronizationContext(synchronizationContext));
     }
@@ -38,7 +38,7 @@ internal class TaskEventSubscription<TPayload> : AsyncEventSubscription<TPayload
     /// <param name="actionReference">A reference to the asynchronous callback.</param>
     /// <param name="filterReference">A reference to the subscription filter.</param>
     /// <param name="scheduler">The scheduler used to invoke the callback.</param>
-    private TaskEventSubscription(IDelegateReference actionReference, IDelegateReference filterReference, TaskScheduler scheduler)
+    private TaskEventSubscription(DelegateReference actionReference, DelegateReference filterReference, TaskScheduler scheduler)
         : base(actionReference, filterReference)
     {
         this.scheduler = scheduler;

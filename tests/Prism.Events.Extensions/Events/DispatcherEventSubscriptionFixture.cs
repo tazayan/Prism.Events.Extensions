@@ -9,18 +9,14 @@ namespace Prism.Events.Extensions.Tests
         {
             DispatcherEventSubscription<object> eventSubscription = null;
 
-            IDelegateReference actionDelegateReference = new MockDelegateReference()
-            {
-                Target = (Action<object>)(arg =>
+            MockDelegateReference actionDelegateReference = new MockDelegateReference(
+                (Action<object>)(arg =>
                 {
                     return;
                 })
-            };
+            );
 
-            IDelegateReference filterDelegateReference = new MockDelegateReference
-            {
-                Target = (Predicate<object>)(arg => true)
-            };
+            MockDelegateReference filterDelegateReference = new MockDelegateReference((Predicate<object>)(arg => true));
             var mockSyncContext = new MockSynchronizationContext();
 
             eventSubscription = new DispatcherEventSubscription<object>(actionDelegateReference, filterDelegateReference, mockSyncContext);
@@ -35,11 +31,8 @@ namespace Prism.Events.Extensions.Tests
         {
             DispatcherEventSubscription eventSubscription = null;
 
-            IDelegateReference actionDelegateReference = new MockDelegateReference()
-            {
-                Target = (Action)(() =>
-                { })
-            };
+            MockDelegateReference actionDelegateReference = new MockDelegateReference((Action)(() =>
+            { }));
 
             var mockSyncContext = new MockSynchronizationContext();
 

@@ -13,7 +13,7 @@ internal class TaskEventSubscription : AsyncEventSubscription
     /// </summary>
     /// <param name="actionReference">A reference to the asynchronous callback.</param>
     /// <returns>A subscription configured for thread-pool scheduling.</returns>
-    public static TaskEventSubscription CreateDefault(IDelegateReference actionReference)
+    public static TaskEventSubscription CreateDefault(DelegateReference actionReference)
     {
         return new TaskEventSubscription(actionReference, TaskScheduler.Default);
     }
@@ -24,7 +24,7 @@ internal class TaskEventSubscription : AsyncEventSubscription
     /// <param name="actionReference">A reference to the asynchronous callback.</param>
     /// <param name="synchronizationContext">The synchronization context used for scheduling.</param>
     /// <returns>A subscription configured for synchronization-context scheduling.</returns>
-    public static TaskEventSubscription CreateForSynchronizationContext(IDelegateReference actionReference, SynchronizationContext synchronizationContext)
+    public static TaskEventSubscription CreateForSynchronizationContext(DelegateReference actionReference, SynchronizationContext synchronizationContext)
     {
         return new TaskEventSubscription(actionReference, TaskSchedulerHelper.FromSynchronizationContext(synchronizationContext));
     }
@@ -34,7 +34,7 @@ internal class TaskEventSubscription : AsyncEventSubscription
     /// </summary>
     /// <param name="actionReference">A reference to the asynchronous callback.</param>
     /// <param name="scheduler">The scheduler used to invoke the callback.</param>
-    private TaskEventSubscription(IDelegateReference actionReference, TaskScheduler scheduler)
+    private TaskEventSubscription(DelegateReference actionReference, TaskScheduler scheduler)
         : base(actionReference)
     {
         this.scheduler = scheduler;

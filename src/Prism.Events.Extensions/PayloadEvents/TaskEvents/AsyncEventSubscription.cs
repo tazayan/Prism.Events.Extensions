@@ -9,8 +9,8 @@ namespace Prism.Events.Extensions;
 /// <typeparam name="TPayload">The type of payload delivered to the subscriber.</typeparam>
 class AsyncEventSubscription<TPayload> : IEventSubscription, IEventActionProvider
 {
-    private readonly IDelegateReference actionReference;
-    private readonly IDelegateReference filterReference;
+    private readonly DelegateReference actionReference;
+    private readonly DelegateReference filterReference;
 
     /// <summary>
     /// Initializes a new instance of <see cref="AsyncEventSubscription{TPayload}"/>.
@@ -26,7 +26,7 @@ class AsyncEventSubscription<TPayload> : IEventSubscription, IEventActionProvide
     /// <exception cref="ArgumentException">
     /// A delegate reference does not contain the required delegate type.
     /// </exception>
-    public AsyncEventSubscription(IDelegateReference actionReference, IDelegateReference filterReference)
+    public AsyncEventSubscription(DelegateReference actionReference, DelegateReference filterReference)
     {
         if (actionReference == null)
             throw new ArgumentNullException(nameof(actionReference));
@@ -141,6 +141,6 @@ class AsyncEventSubscription<TPayload> : IEventSubscription, IEventActionProvide
     /// </returns>
     public bool IsSubscriptionAlive()
     {
-        return Action != null && Filter != null;
+        return !actionReference.TargetEquals(null) && !filterReference.TargetEquals(null);
     }
 }

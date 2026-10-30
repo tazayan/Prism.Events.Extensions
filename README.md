@@ -9,7 +9,7 @@ This is an independent extension package and is not an official PrismLibrary pac
 Install the latest stable release from [NuGet.org](https://www.nuget.org/packages/Async.Prism.Events.Extensions).
 
 | Platform | Package | NuGet |
-|---|---|---|---|
+|---|---|---|
 | Cross-platform (.NET 8, 9, and 10) | [Async.Prism.Events.Extensions](https://www.nuget.org/packages/Async.Prism.Events.Extensions) | [![NuGet version](https://img.shields.io/nuget/v/Async.Prism.Events.Extensions.svg)](https://www.nuget.org/packages/Async.Prism.Events.Extensions) |
 
 ### Install

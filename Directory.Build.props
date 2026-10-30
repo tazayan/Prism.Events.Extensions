@@ -12,11 +12,12 @@
     <IsPackable Condition="'$(MSBuildProjectName)' == 'Prism.Events.Extensions'">true</IsPackable>
     <IsPackable Condition="'$(IsPackable)' == ''">false</IsPackable>
     <IsTestProject Condition="'$(MSBuildProjectName)' == 'Prism.Events.Extensions.Tests'">true</IsTestProject>
-    <PackageOutputPath>$(MSBuildThisFileDirectory)artifacts\packages</PackageOutputPath>
+    <PackageOutputPath>$([System.IO.Path]::Combine('$(MSBuildThisFileDirectory)', 'artifacts', 'packages'))</PackageOutputPath>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(IsPackable)' == 'true'">
     <Authors>Azat Tazayan</Authors>
+    <Copyright>Copyright © 2026-present Azat Tazayan</Copyright>
     <PackageProjectUrl>https://github.com/tazayan/Prism.Events.Extensions</PackageProjectUrl>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>https://github.com/tazayan/Prism.Events.Extensions.git</RepositoryUrl>

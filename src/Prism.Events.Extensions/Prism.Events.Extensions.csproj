@@ -1,9 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Description>High-performance synchronous and ValueTask-based asynchronous event types for Prism.Events.</Description>
-    <PackageTags>prism;events;event aggregator;pubsubevent;async;performance</PackageTags>
     <PackageId>Async.Prism.Events.Extensions</PackageId>
+    <Title>Async Prism Events Extensions</Title>
+    <Description>High-performance, low-allocation synchronous and ValueTask-based asynchronous publish/subscribe event types for Prism.Events.</Description>
+    <PackageTags>prism;events;event-aggregator;pubsubevent;async;valuetask;performance</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>

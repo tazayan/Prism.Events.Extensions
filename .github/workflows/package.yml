@@ -1,4 +1,5 @@
-name: Package
+name: Build NuGet Package
+run-name: Create NuGet package ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}
 
 on:
   push:
@@ -7,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: Package version, for example 0.1.0 or 0.1.0-preview.1
+        description: "NuGet package version without the v prefix (for example, 1.0.0 or 1.0.0-preview.1)"
         required: true
         type: string
 
@@ -19,60 +20,134 @@ env:
   DOTNET_NOLOGO: true
 
 jobs:
-  package:
-    name: Create release packages
+  build-test-package:
+    name: Build, test, and create package
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
-      - name: Set package version
+      - name: Determine package version
+        id: version
         shell: bash
         env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          REF_TYPE: ${{ github.ref_type }}
           REQUESTED_VERSION: ${{ inputs.version }}
         run: |
-          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
-            package_version="${GITHUB_REF_NAME#v}"
-          else
-            package_version="$REQUESTED_VERSION"
-          fi
+          case "$EVENT_NAME" in
+            push)
+              if [[ "$REF_TYPE" != "tag" || "$REF_NAME" != v* ]]; then
+                echo "Package push events must come from a tag whose name starts with v." >&2
+                exit 1
+              fi
+              package_version="${REF_NAME#v}"
+              ;;
+            workflow_dispatch)
+              package_version="$REQUESTED_VERSION"
+              ;;
+            *)
+              echo "Unsupported workflow event: $EVENT_NAME" >&2
+              exit 1
+              ;;
+          esac
 
-          if [[ ! "$package_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.-]+)?$ ]]; then
+          semver_pattern='^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?$'
+          if [[ ! "$package_version" =~ $semver_pattern ]]; then
             echo "Invalid package version: $package_version" >&2
+            echo "Use SemVer without a leading v, for example 1.0.0 or 1.0.0-preview.1." >&2
             exit 1
           fi
 
-          echo "PACKAGE_VERSION=$package_version" >> "$GITHUB_ENV"
+          echo "value=$package_version" >> "$GITHUB_OUTPUT"
+          echo "### NuGet package" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Version: \`$package_version\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Source revision: \`$GITHUB_SHA\`" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Set up .NET SDK
-        uses: actions/setup-dotnet@v6
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
           global-json-file: global.json
 
-      - name: Restore
+      - name: Read package metadata
+        id: metadata
+        shell: bash
+        run: |
+          project="src/Prism.Events.Extensions/Prism.Events.Extensions.csproj"
+          package_id="$(dotnet msbuild "$project" -nologo -getProperty:PackageId)"
+          package_title="$(dotnet msbuild "$project" -nologo -getProperty:Title)"
+          package_description="$(dotnet msbuild "$project" -nologo -getProperty:Description)"
+          target_frameworks="$(dotnet msbuild "$project" -nologo -getProperty:TargetFrameworks)"
+
+          if [[ -z "$package_id" || -z "$package_title" || -z "$package_description" || -z "$target_frameworks" ]]; then
+            echo "Package ID, title, description, and target frameworks must all be configured." >&2
+            exit 1
+          fi
+
+          echo "id=$package_id" >> "$GITHUB_OUTPUT"
+          echo "frameworks=$target_frameworks" >> "$GITHUB_OUTPUT"
+          echo "- Package ID: \`$package_id\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Title: $package_title" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Description: $package_description" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Target frameworks: \`$target_frameworks\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Restore dependencies
         run: dotnet restore Prism.Events.Extensions.slnx
 
-      - name: Build
+      - name: Build solution
         run: dotnet build Prism.Events.Extensions.slnx --configuration Release --no-restore
 
-      - name: Test
-        run: >-
-          dotnet test tests/Prism.Events.Extensions/Prism.Events.Extensions.Tests.csproj
-          --configuration Release
-          --no-build
+      - name: Run unit tests
+        shell: bash
+        env:
+          TARGET_FRAMEWORKS: ${{ steps.metadata.outputs.frameworks }}
+        run: |
+          set -euo pipefail
+          IFS=';' read -ra frameworks <<< "$TARGET_FRAMEWORKS"
+          for framework in "${frameworks[@]}"; do
+            dotnet test tests/Prism.Events.Extensions/Prism.Events.Extensions.Tests.csproj \
+              --configuration Release \
+              --framework "$framework" \
+              --no-build \
+              --settings tests/Prism.Events.Extensions/coverlet.runsettings \
+              --results-directory "artifacts/test-results/$framework"
+          done
 
-      - name: Create NuGet packages
+      - name: Create NuGet package
         run: >-
           dotnet pack src/Prism.Events.Extensions/Prism.Events.Extensions.csproj
           --configuration Release
           --no-build
           --no-restore
-          -p:PackageVersion=${{ env.PACKAGE_VERSION }}
+          -p:PackageVersion=${{ steps.version.outputs.value }}
 
-      - name: Upload NuGet packages
-        uses: actions/upload-artifact@v7
+      - name: Verify package output
+        id: package
+        shell: bash
+        run: |
+          mapfile -t packages < <(find artifacts/packages -maxdepth 1 -type f -name '*.nupkg')
+
+          if [[ "${#packages[@]}" -ne 1 ]]; then
+            echo "Expected exactly one .nupkg file, but found ${#packages[@]}." >&2
+            printf '%s\n' "${packages[@]}" >&2
+            exit 1
+          fi
+
+          package_file="${packages[0]}"
+          package_name="$(basename "$package_file")"
+          echo "path=$package_file" >> "$GITHUB_OUTPUT"
+          echo "- Artifact file: \`$package_name\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload NuGet package artifact
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: nuget-packages-${{ env.PACKAGE_VERSION }}
-          path: artifacts/packages/*.*nupkg
+          name: ${{ steps.metadata.outputs.id }}-${{ steps.version.outputs.value }}
+          path: ${{ steps.package.outputs.path }}
           if-no-files-found: error
+          retention-days: 30
+          compression-level: 0

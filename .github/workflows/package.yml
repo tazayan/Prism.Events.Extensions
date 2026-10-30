@@ -110,12 +110,16 @@ jobs:
           set -euo pipefail
           IFS=';' read -ra frameworks <<< "$TARGET_FRAMEWORKS"
           for framework in "${frameworks[@]}"; do
-            dotnet test tests/Prism.Events.Extensions/Prism.Events.Extensions.Tests.csproj \
+            dotnet test \
+              --project tests/Prism.Events.Extensions/Prism.Events.Extensions.Tests.csproj \
               --configuration Release \
               --framework "$framework" \
               --no-build \
-              --settings tests/Prism.Events.Extensions/coverlet.runsettings \
-              --results-directory "artifacts/test-results/$framework"
+              --results-directory "artifacts/test-results/$framework" \
+              --coverage \
+              --coverage-output coverage.cobertura.xml \
+              --coverage-output-format cobertura \
+              --coverage-settings tests/Prism.Events.Extensions/coverage.settings.xml
           done
 
       - name: Create NuGet package

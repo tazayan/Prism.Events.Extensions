@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Microsoft code coverage settings, passed with: dotnet test --coverage-settings <this file> -->
 <Configuration>
+  <DeterministicReport>true</DeterministicReport>
   <CodeCoverage>
     <ModulePaths>
       <Include>
@@ -13,6 +13,5 @@
         <Attribute>^System\.Diagnostics\.CodeAnalysis\.ExcludeFromCodeCoverageAttribute$</Attribute>
       </Exclude>
     </Attributes>
-    <DeterministicReport>true</DeterministicReport>
   </CodeCoverage>
 </Configuration>

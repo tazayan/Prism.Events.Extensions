@@ -369,9 +369,10 @@ public class ConcurrencyFixture
     }
 
     [Fact]
-    public async Task BackgroundSubscriptionsRunOffThePublisherThread()
+    public void BackgroundSubscriptionsRunOffThePublisherThread()
     {
-        var publisherThread = Environment.CurrentManagedThreadId;
+        var publisherThread = 0;
+        Exception publisherException = null;
         var threads = new ConcurrentBag<int>();
         using var countdown = new CountdownEvent(2);
         var lightweightEvent = new LightweightPubSubEvent();
@@ -383,11 +384,26 @@ public class ConcurrencyFixture
         asyncEvent.Subscribe(() => { threads.Add(Environment.CurrentManagedThreadId); return ValueTask.CompletedTask; }, ThreadOption.BackgroundThread, true);
         asyncPayloadEvent.Subscribe(_ => { threads.Add(Environment.CurrentManagedThreadId); return ValueTask.CompletedTask; }, ThreadOption.BackgroundThread, true);
 
-        lightweightEvent.Publish();
-        lightweightPayloadEvent.Publish(1);
-        await asyncEvent.Send();
-        await asyncPayloadEvent.Send(1);
+        var publisher = new Thread(() =>
+        {
+            publisherThread = Environment.CurrentManagedThreadId;
+            try
+            {
+                lightweightEvent.Publish();
+                lightweightPayloadEvent.Publish(1);
+                asyncEvent.Send().AsTask().GetAwaiter().GetResult();
+                asyncPayloadEvent.Send(1).AsTask().GetAwaiter().GetResult();
+            }
+            catch (Exception exception)
+            {
+                publisherException = exception;
+            }
+        });
 
+        publisher.Start();
+
+        Assert.True(publisher.Join(TestTimeout));
+        Assert.Null(publisherException);
         Assert.True(countdown.Wait(TestTimeout));
         Assert.Equal(4, threads.Count);
         Assert.DoesNotContain(publisherThread, threads);

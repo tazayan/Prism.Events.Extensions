@@ -70,11 +70,11 @@ namespace Prism.Events.Extensions.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Invalid Delegate Reference Type Exception.
+        ///   Looks up a localized string similar to The delegate reference must target a delegate of type {0}..
         /// </summary>
-        internal static string InvalidDelegateRerefenceTypeException {
+        internal static string InvalidDelegateReferenceTypeException {
             get {
-                return ResourceManager.GetString("InvalidDelegateRerefenceTypeException", resourceCulture);
+                return ResourceManager.GetString("InvalidDelegateReferenceTypeException", resourceCulture);
             }
         }
     }

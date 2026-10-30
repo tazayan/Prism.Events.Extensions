@@ -141,9 +141,6 @@ public class LightweightPubSubEvent<TPayload> : EventBase
         EventSubscription<TPayload> subscription;
         switch (threadOption)
         {
-            case ThreadOption.PublisherThread:
-                subscription = new EventSubscription<TPayload>(actionReference, filterReference);
-                break;
             case ThreadOption.BackgroundThread:
                 subscription = new BackgroundEventSubscription<TPayload>(actionReference, filterReference);
                 break;
